@@ -187,20 +187,26 @@ def ofRen (ξ : Nat → Nat) : Nat → Exp :=
 @[simp]
 theorem ofRen_id : ofRen id = Exp.Var := rfl
 
-/-- TODO: generalize 1 to n-/
 theorem ofRen_upr (n ξ) : ofRen (upr ξ n) = up (ofRen ξ) n := by
-  induction n with
+  induction n generalizing ξ with
   | zero => rfl
   | succ n ih =>
     ext ⟨⟩  --simp [ofRen, upr, up, snoc]; sorry
     . simp [ofRen, upr, up, snoc]
     . rename_i k
+      conv => lhs; simp [ofRen, upr, up, snoc]
+      rw[← ofRen_id];
+      let ξ' := fun i => upr ξ n i + 1
+      have ih := ih ξ';
       conv => lhs; unfold ofRen; dsimp [upr, up, snoc];
-      unfold up snoc; simp
+      unfold up snoc;
       have ih_at_k := congrArg (fun f => f k) ih
       simp at ih_at_k
-      unfold ofRen at ih_at_k;
-      sorry
+      unfold ofRen at ih_at_k; simp
+      rename_i ih'
+      have : rename_exp Nat.succ (up (ofRen ξ) n k) = rename_exp Nat.succ (ofRen (upr ξ n) k) := by simp[ih']
+      rw[this]; simp[ofRen, rename_exp]
+
 
 
 #check List.mem_map
@@ -211,15 +217,17 @@ theorem rename_eq_subst_ofRen (ξ : Nat → Nat) : rename_exp ξ = subst_exp (of
   all_goals try
     simp only [ofRen, rename_exp, subst_exp, List.map_attach_eq_pmap, List.pmap_eq_map, Call.injEq, CallLambda.injEq, TupleCtor.injEq, ArrayLiteral.injEq, List.map_inj_left, true_and] <;>
     grind [ofRen,rename_exp, subst_exp, up_var, List.map_attach_eq_pmap, List.pmap_eq_map, map_id''_mem]
-  . sorry
+  . rename_i dt fields h
+    simp [rename_exp, subst_exp]
+    intro a b h_mem
+    exact h ⟨a, b⟩ h_mem ξ
   . simp [rename_exp, subst_exp]
     rename_i ty e exp he hexp
     constructor
-    . sorry --exact he
-    . sorry
-      -- rw[← ofRen_upr 1 ξ]
-      -- simp [upr]; unfold snoc; simp; sorry
-  . simp only [rename_exp, upr_one, subst_exp, Quant.injEq, true_and]
+    . intro a h_mem; exact he a h_mem ξ  --exact he
+    . rw[← ofRen_upr e.length ξ]
+      exact hexp (upr ξ e.length)
+  . simp [rename_exp, subst_exp]
     rename_i _ _ _ h
     rw[← ofRen_upr 1 ξ, ← upr_one]
     exact h (upr ξ 1)
