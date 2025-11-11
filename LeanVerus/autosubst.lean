@@ -87,7 +87,6 @@ def up (σ : Nat → Exp) (n: Nat): Nat → Exp :=
   --| 1 => snoc (rename_exp Nat.succ ∘ σ) (.Var 0)
   | .succ n => snoc (rename_exp Nat.succ ∘ (up σ n)) (.Var 0)
 
-/-- TODO: generalize 1 to n-/
 @[simp]
 theorem up_var (n: Nat): up Exp.Var n = Exp.Var:= by
   induction n with
@@ -174,16 +173,15 @@ theorem rename_eq_subst_ofRen (ξ : Nat → Nat) : rename_exp ξ = subst_exp (of
   . simp [rename_exp, subst_exp]
     rename_i ty e exp he hexp
     constructor
-    . intro a h_mem; exact he a h_mem ξ  --exact he
+    . intro a h_mem; exact he a h_mem ξ
     . rw[← ofRen_upr e.length ξ]
       exact hexp (upr ξ e.length)
-  . simp [rename_exp, subst_exp]
-    rename_i _ _ _ h
+  all_goals
+    simp [rename_exp, subst_exp]
     rw[← ofRen_upr 1 ξ, ← upr_one]
+  . rename_i _ _ _ h
     exact h (upr ξ 1)
-  . simp [rename_exp, upr_one, subst_exp]
-    rename_i _ _ h
-    rw[← ofRen_upr 1 ξ, ← upr_one]
+  . rename_i _ _ h
     exact h (upr ξ 1)
 
 
@@ -241,23 +239,32 @@ theorem rename_subst (σ ξ) (t : Exp) : (t.rename_exp ξ).subst_exp σ = t.subs
     rw[up_comp_ren_sb 1 ξ σ, ← h (up σ 1) (upr ξ 1)]
     simp only [rename_exp, upr_one, subst_exp]
 
-
-
-/-- TODO: generalize 1 to n-/
 theorem up_comp_sb_ren (n: Nat) (σ : Nat → Exp) (ξ : Nat → Nat) :
-    up (rename_exp ξ ∘ σ) n = rename_exp (upr ξ 1) ∘ up σ n:= by
-  ext ⟨⟩ <;> (unfold up; dsimp [snoc, rename_exp, upr])
-  sorry
-  sorry
-  -- conv => lhs; rw [rename_eq_subst_ofRen, rename_subst]
-  -- conv => rhs; rw [rename_eq_subst_ofRen, rename_subst]
-  -- rfl
+    up (rename_exp ξ ∘ σ) n = rename_exp (upr ξ n) ∘ up σ n:= by
+  induction n generalizing σ ξ with
+  | zero => rfl
+  | succ n ih =>
+    ext ⟨⟩
+    . simp [up, snoc, rename_exp, upr]
+    . rename_i k
+      conv => lhs; simp [up]
+      have hk := congrArg (fun f => f k) (ih σ ξ)
+      simp at hk
+      rw[hk]; simp[up, snoc, upr]
+      conv => lhs; rw [rename_eq_subst_ofRen, rename_subst]
+      conv => rhs; rw [rename_eq_subst_ofRen, rename_subst]
+      rfl
 
 theorem subst_rename (ξ σ) (t : Exp) :
     (t.subst_exp σ).rename_exp ξ = t.subst_exp (rename_exp ξ ∘ σ) := by
   induction t generalizing ξ σ
-  all_goals sorry
-  --all_goals grind [subst_exp, rename_exp, up_comp_sb_ren]
+  all_goals try simp [subst_exp, rename_exp, up_comp_sb_ren]; grind
+  . simp [rename_exp, subst_exp]
+  . simp [subst_exp]
+  . simp [rename_exp, subst_exp, List.map_attach_eq_pmap, List.pmap_eq_map]
+    intros a b hmem
+    rename_i _ _ h
+    exact h ⟨a, b⟩ hmem ξ σ
 
 theorem up_comp (n: Nat) (σ τ : Nat → Exp) :
     up (comp σ τ) n = comp (up σ n) (up τ n) := by
@@ -267,11 +274,12 @@ theorem up_comp (n: Nat) (σ τ : Nat → Exp) :
     ext ⟨⟩
     . unfold up comp; simp [snoc]
     . rename_i k
-      simp [up, snoc, comp] -- unfolds to the rename/subst shapes
+      simp [up, snoc, comp] at *
       have hk := congrArg (fun f => f k) ih
       simp at hk
-      sorry
-
+      rw[hk]; simp[subst_rename]
+      rw[rename_subst (snoc (rename_exp Nat.succ ∘ up σ n) (Exp.Var 0)) Nat.succ (up τ n k)]
+      congr
 
 
 
@@ -280,11 +288,10 @@ theorem subst_subst (σ τ : Nat → Exp) (t : Exp) :
   induction t generalizing σ τ
   all_goals try simp[subst_exp] <;> grind [subst_exp, up_comp]
   . simp only [subst_exp, comp, Function.comp_apply]
-  . rename_i dt fields ih
-    simp [subst_exp]
-    sorry
-
-
+  . rename_i _ _ ih
+    simp [subst_exp, List.map_attach_eq_pmap, List.pmap_eq_map]
+    intro a b h_mem
+    exact ih ⟨a, b⟩ h_mem σ τ
 
 
 theorem comp_assoc (σ τ ρ : Nat → Exp) : comp σ (comp τ ρ) = comp (comp σ τ) ρ := by
@@ -428,11 +435,10 @@ def SbIsVar (σ : Nat → Exp) (n : Nat) :=
   ∀ ⦃i⦄, i < n → σ i = .Var i
 
 
-theorem SbIsVar.up {σ : Nat → Exp} {n k} : SbIsVar σ n → SbIsVar (Exp.up σ k) (n + k) := by sorry
-  -- rintro σk ⟨⟩ lt
-  -- . simp [Exp.up1_eq_snoc]
-  -- . have := σk (Nat.succ_lt_succ_iff.mp lt)
-  --   simp [Exp.up1_eq_snoc, Exp.comp, this, Exp.subst_exp]
+theorem SbIsVar.up {σ : Nat → Exp} {n k} : SbIsVar σ n → SbIsVar (Exp.up σ k) (n + k) := by
+  rintro σk ⟨⟩ lt
+  . sorry
+  . sorry
 
 theorem SbIsBvar.zero (σ : Nat → Exp) : SbIsVar σ 0 := nofun
 
