@@ -404,26 +404,53 @@ def isClosed (k : Nat := 0) (e: Exp): Bool:=
   match e with
   | Const _ => true
   | Var i => i < k
-  | Call fn typs exps =>
-    List.foldl (fun acc exp => acc && isClosed k exp) true exps
-  | CallLambda body args =>
-    isClosed k body &&
-    List.foldl (fun acc exp => acc && isClosed k exp) true args
+  | Call fn _ exps =>
+    exps.attach.all (fun e =>
+      have : sizeOf e.val < sizeOf exps := by
+         have := List.sizeOf_lt_of_mem e.property
+         grind [Prod.mk.sizeOf_spec]
+    isClosed k e)
+    --List.foldl (fun acc exp => acc && isClosed k exp) true exps
+  | CallLambda lam args => isClosed k lam &&
+    args.attach.all (fun e =>
+      have : sizeOf e.val < sizeOf args := by
+         have := List.sizeOf_lt_of_mem e.property
+         grind [Prod.mk.sizeOf_spec]
+    isClosed k e)
+
+    --List.foldl (fun acc exp => acc && isClosed k exp) true args
   | StructCtor dt fields =>
     fields.attach.all (fun ⟨(name, e), h⟩ =>
       have : sizeOf e < sizeOf fields := by
         have := List.sizeOf_lt_of_mem h
         grind [Prod.mk.sizeOf_spec]
       isClosed k e)
-  | TupleCtor _ data => List.foldl (fun acc exp => acc && isClosed k exp) true data
+  | TupleCtor _ data => --List.foldl (fun acc exp => acc && isClosed k exp) true data
+    data.attach.all (fun e =>
+      have : sizeOf e.val < sizeOf data := by
+         have := List.sizeOf_lt_of_mem e.property
+         grind [Prod.mk.sizeOf_spec]
+    isClosed k e)
   | Unary _ arg => isClosed k arg
   | Unaryr _ arg => isClosed k arg
   | Binary _ arg₁ arg₂ => isClosed k arg₁ && isClosed k arg₂
   | If cond branch₁ branch₂ =>
     isClosed k cond && isClosed k branch₁ && isClosed k branch₂
-  | Let ty es exp => List.foldl (fun acc e => acc && isClosed k e) (isClosed (k + es.length) exp) es
+  | Let ty es exp => --List.foldl (fun acc e => acc && isClosed k e) (isClosed (k + es.length) exp) es
+    (isClosed (k + es.length) exp) &&
+    es.attach.all (fun e =>
+      have : sizeOf e.val < sizeOf es := by
+         have := List.sizeOf_lt_of_mem e.property
+         grind [Prod.mk.sizeOf_spec]
+    isClosed k e)
   | Quant _ _ exp | Lambda _ exp => isClosed (k + 1) exp
-  | ArrayLiteral elems => List.foldl (fun acc exp => acc && isClosed k exp) true elems
+  | ArrayLiteral elems => --List.foldl (fun acc exp => acc && isClosed k exp) true elems
+    elems.attach.all (fun e =>
+      have : sizeOf e.val < sizeOf elems := by
+         have := List.sizeOf_lt_of_mem e.property
+         grind [Prod.mk.sizeOf_spec]
+    isClosed k e)
+  termination_by e
 
 /-- The substitution acts via identity on indices strictly below `n`. -/
 def SbIsVar (σ : Nat → Exp) (n : Nat) :=
@@ -457,10 +484,10 @@ theorem subst_of_isClosed' {e : Exp} {k} {σ : Nat → Exp} :
   all_goals try simp[subst_exp] <;> grind[SbIsVar, isClosed]
   . simp[subst_exp]
     expose_names
-    simp [isClosed] at h
+    simp only [isClosed, List.all_subtype, List.unattach_attach, List.all_eq_true] at h
     refine map_id''_mem exps ?_
     intro x hmem
-    sorry
+    exact h_1 x hmem (h x hmem) hσ
   all_goals sorry
 
 
