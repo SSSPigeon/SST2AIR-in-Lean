@@ -217,15 +217,30 @@ theorem rename_subst (σ ξ) (t : Exp) : (t.rename_exp ξ).subst_exp σ = t.subs
   induction t generalizing σ ξ
   all_goals try simp[rename_exp, subst_exp]<;> grind
   . rename_i dt fields h
+    simp [subst_exp, List.map_attach_eq_pmap, List.pmap_eq_map]
+    apply Eq.symm
+    calc
+      StructCtor dt (List.map (fun a ↦ (a.fst, subst_exp (σ ∘ ξ) a.snd)) fields) =
+      StructCtor dt (List.map (fun a ↦ (a.fst, subst_exp σ (rename_exp ξ a.snd))) fields) := by
+        simp; intro a b h_mem; simp only [h ⟨a, b⟩ h_mem σ ξ]
+      _ = subst_exp σ (StructCtor dt (List.map (fun a ↦ (a.fst, rename_exp ξ a.snd)) fields)) := by
+        simp [subst_exp, List.map_attach_eq_pmap, List.pmap_eq_map]
+      _ = subst_exp σ (rename_exp ξ (StructCtor dt fields)) := by
+        simp [rename_exp, List.map_attach_eq_pmap, List.pmap_eq_map]
+  . rename_i _ es _ hes he
+    simp only [subst_exp]
+    rw[up_comp_ren_sb es.length ξ σ, ← he (up σ es.length) (upr ξ es.length)]
     simp [rename_exp, subst_exp]
-    sorry
-  . sorry
-  . rename_i q var exp h
-    simp [subst_exp]
-    rw[up_comp_ren_sb 1 ξ σ]
-    sorry
-  . sorry
-  --all_goals grind [rename_exp, subst_exp, up_comp_ren_sb]
+    intro a hmem; exact hes a hmem σ ξ
+  . rename_i _ _ _ h
+    simp only [subst_exp]
+    rw[up_comp_ren_sb 1 ξ σ, ← h (up σ 1) (upr ξ 1)]
+    simp only [rename_exp, upr_one, subst_exp]
+  . rename_i _ _ h
+    simp only [subst_exp]
+    rw[up_comp_ren_sb 1 ξ σ, ← h (up σ 1) (upr ξ 1)]
+    simp only [rename_exp, upr_one, subst_exp]
+
 
 
 /-- TODO: generalize 1 to n-/
@@ -248,13 +263,29 @@ theorem up_comp (n: Nat) (σ τ : Nat → Exp) :
     up (comp σ τ) n = comp (up σ n) (up τ n) := by
   induction n with
   | zero => rfl
-  | succ n ih => sorry
+  | succ n ih =>
+    ext ⟨⟩
+    . unfold up comp; simp [snoc]
+    . rename_i k
+      simp [up, snoc, comp] -- unfolds to the rename/subst shapes
+      have hk := congrArg (fun f => f k) ih
+      simp at hk
+      sorry
+
+
 
 
 theorem subst_subst (σ τ : Nat → Exp) (t : Exp) :
     (t.subst_exp τ).subst_exp σ = t.subst_exp (comp σ τ) := by
   induction t generalizing σ τ
-  all_goals sorry --grind [subst_exp, up_comp]
+  all_goals try simp[subst_exp] <;> grind [subst_exp, up_comp]
+  . simp only [subst_exp, comp, Function.comp_apply]
+  . rename_i dt fields ih
+    simp [subst_exp]
+    sorry
+
+
+
 
 theorem comp_assoc (σ τ ρ : Nat → Exp) : comp σ (comp τ ρ) = comp (comp σ τ) ρ := by
   ext i
@@ -413,7 +444,9 @@ theorem subst_of_isClosed' {e : Exp} {k} {σ : Nat → Exp} :
   --   simp only [isClosed, decide_eq_true_eq] at h
   --   simp [subst, hσ h]
   --all_goals grind [subst_exp, isClosed, → SbIsVar.up]
-  all_goals sorry
+  all_goals try sorry
+
+
 
 theorem subst_of_isClosed {e : Exp} (σ : Nat → Exp) : e.isClosed → e.subst_exp σ = e := sorry
   --fun h => e.subst_of_isClosed' h (.zero _)
