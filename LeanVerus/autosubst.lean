@@ -52,19 +52,6 @@ def rename_exp (ξ : Nat → Nat) : Exp → Exp
           have := List.sizeOf_lt_of_mem h
           grind [Prod.mk.sizeOf_spec]
         (name, rename_exp ξ e))
-    -- match fields with
-    -- | [] => .StructCtor dt []
-    -- | (name, e) :: rest =>
-      -- let renamed_e := rename_exp ξ e
-      -- -- To make the definition terminate, we must use dt, instead of some new name here.
-      -- -- I'm not sure whether this will cause problems later.
-      -- -- TODO: check this.
-      -- let renamed_rest := rename_exp ξ (.StructCtor dt rest)
-      -- let renamed_fields :=
-      --   match renamed_rest with
-      --   | .StructCtor _ rest_fields => (name, renamed_e) :: rest_fields
-      --   | _ => [(name, renamed_e)]  -- This case should not happen
-      -- .StructCtor dt renamed_fields
   | .TupleCtor size data => .TupleCtor size (data.map (rename_exp ξ))
   | .Unary op arg => .Unary op (rename_exp ξ arg)
   | .Unaryr op arg => .Unaryr op (rename_exp ξ arg)
@@ -149,31 +136,6 @@ theorem subst_var : subst_exp Exp.Var = id := by
   all_goals try
     simp only [subst_exp, List.map_attach_eq_pmap, List.pmap_eq_map] <;>
     grind [subst_exp, up_var, List.map_attach_eq_pmap, List.pmap_eq_map, map_id''_mem]
-  -- this works
-  --   simp only [subst_exp, List.map_attach_eq_pmap, List.pmap_eq_map];
-  --   grind [subst_exp, up_var, List.map_attach_eq_pmap, List.pmap_eq_map, map_id''_mem]
-  -- this doesn't work
-  --  grind [subst_exp, up_var, List.map_attach_eq_pmap, List.pmap_eq_map, map_id''_mem]
-
-  -- let motive₁ : Exp → Prop := fun e => subst_exp Exp.Var e = e
-  -- let motive₂ : List Exp → Prop := fun es => es.map (subst_exp Exp.Var) = es
-  -- let motive₃ : List (String × Exp) → Prop :=
-  --   fun fs => fs.map (fun (p : String × Exp) => (p.fst, subst_exp Exp.Var p.snd)) = fs
-  -- let motive₄ : (String × Exp) → Prop := fun p => (p.fst, subst_exp Exp.Var p.snd) = p
-  -- -- Prove the needed helper lemmas for lists/pairs
-  -- have nil₂ : motive₂ [] := rfl
-  -- have cons₂ : ∀ (head : Exp) (tail : List Exp),
-  --   motive₁ head → motive₂ tail → motive₂ (head :: tail) := by
-  --   intros head tail h₁ h₂; unfold motive₁ at h₁; simp [motive₂, h₂, h₁]
-  -- have nil₃ : motive₃ [] := rfl
-  -- have cons₃ : ∀ (head : String × Exp) (tail : List (String × Exp)),
-  --   motive₄ head → motive₃ tail → motive₃ (head :: tail) := by
-  --   intros head tail h₁ h₂; unfold motive₄ at h₁; simp [motive₃, h₂, h₁]
-  -- have pair₄ : ∀ (s : String) (e: Exp), motive₁ e → motive₄ (s, e) := by
-  --   intros s e h; unfold motive₄; simp [motive₁, h]
-  -- ext t; dsimp
-  -- apply @Exp.recOn (motive_1 := motive₁) (motive_2 := motive₂) (motive_3 := motive₃) (motive_4 := motive₄)
-  -- all_goals grind [subst_exp, up_var, List.map_attach_eq_pmap, List.pmap_eq_map]
 
 
 @[simp]
@@ -191,21 +153,8 @@ theorem ofRen_upr (n ξ) : ofRen (upr ξ n) = up (ofRen ξ) n := by
   induction n generalizing ξ with
   | zero => rfl
   | succ n ih =>
-    ext ⟨⟩  --simp [ofRen, upr, up, snoc]; sorry
-    . simp [ofRen, upr, up, snoc]
-    . rename_i k
-      conv => lhs; simp [ofRen, upr, up, snoc]
-      rw[← ofRen_id];
-      let ξ' := fun i => upr ξ n i + 1
-      have ih := ih ξ';
-      conv => lhs; unfold ofRen; dsimp [upr, up, snoc];
-      unfold up snoc;
-      have ih_at_k := congrArg (fun f => f k) ih
-      simp at ih_at_k
-      unfold ofRen at ih_at_k; simp
-      rename_i ih'
-      have : rename_exp Nat.succ (up (ofRen ξ) n k) = rename_exp Nat.succ (ofRen (upr ξ n) k) := by simp[ih']
-      rw[this]; simp[ofRen, rename_exp]
+    ext ⟨⟩ <;> simp [ofRen, upr, up, snoc]
+    . rw[← ih]; simp [ofRen, rename_exp]
 
 
 
@@ -213,7 +162,8 @@ theorem ofRen_upr (n ξ) : ofRen (upr ξ n) = up (ofRen ξ) n := by
 #check List.ext_getElem
 #check @List.getElem_of_eq
 theorem rename_eq_subst_ofRen (ξ : Nat → Nat) : rename_exp ξ = subst_exp (ofRen ξ) := by
-  ext t; induction t generalizing ξ
+  ext t; --fun_induction rename_exp
+  induction t generalizing ξ
   all_goals try
     simp only [ofRen, rename_exp, subst_exp, List.map_attach_eq_pmap, List.pmap_eq_map, Call.injEq, CallLambda.injEq, TupleCtor.injEq, ArrayLiteral.injEq, List.map_inj_left, true_and] <;>
     grind [ofRen,rename_exp, subst_exp, up_var, List.map_attach_eq_pmap, List.pmap_eq_map, map_id''_mem]
@@ -238,32 +188,6 @@ theorem rename_eq_subst_ofRen (ξ : Nat → Nat) : rename_exp ξ = subst_exp (of
 
 
 
-  -- let motive₁ : Exp → Prop := fun e => rename_exp ξ e = subst_exp (ofRen ξ) e
-  -- let motive₂ : List Exp → Prop := fun es => es.map (rename_exp ξ) = es.map (subst_exp (ofRen ξ))
-  -- let motive₃ : List (String × Exp) → Prop :=
-  --   fun fs => fs.map (fun (p : String × Exp) => (p.fst, rename_exp ξ p.snd)) = fs.map (fun (p : String × Exp) => (p.fst, subst_exp (ofRen ξ) p.snd))
-  -- let motive₄ : (String × Exp) → Prop := fun p => (p.fst, subst_exp Exp.Var p.snd) = (p.fst, rename_exp ξ p.snd)
-  -- -- Prove the needed helper lemmas for lists/pairs
-  -- have nil₂ : motive₂ [] := rfl
-  -- have cons₂ : ∀ (head : Exp) (tail : List Exp),
-  --   motive₁ head → motive₂ tail → motive₂ (head :: tail) := by
-  --   intros head tail h₁ h₂; unfold motive₁ at h₁; unfold motive₂ at h₂; simp [motive₂, h₁]
-  --   intro a h; have h_idx := List.get_of_mem h
-  --   rcases h_idx with ⟨idx, h_eq⟩; simp [← h_eq]
-  --   have := @List.getElem_of_eq _ (List.map (rename_exp ξ) tail) (List.map (subst_exp (ofRen ξ)) tail) h₂ ↑idx
-  --   simp at this; exact this
-  -- have nil₃ : motive₃ [] := rfl
-  -- have cons₃ : ∀ (head : String × Exp) (tail : List (String × Exp)),
-  --   motive₄ head → motive₃ tail → motive₃ (head :: tail) := by
-  --   intros head tail h₁ h₂; unfold motive₄ at h₁; simp [motive₃]; intro a b h
-  --   rcases h with ⟨h_head, h_tail⟩
-  --   . simp at h₁
-  --   . sorry
-  -- have pair₄ : ∀ (s : String) (e: Exp), motive₁ e → motive₄ (s, e) := by
-  --   intros s e h; unfold motive₄; simp [motive₁, h]
-  -- ext t
-  -- apply @Exp.recOn
-
 
 /-- Compose two substitutions.
 ```
@@ -282,16 +206,25 @@ theorem var_comp (σ : Nat → Exp) : comp Exp.Var σ = σ := by
 theorem comp_var (σ : Nat → Exp) : comp σ Exp.Var = σ := by
   ext i; simp [comp, subst_exp]
 
-/-- TODO: generalize 1 to n-/
 theorem up_comp_ren_sb (n: Nat) (ξ : Nat → Nat) (σ : Nat → Exp) :
     up (σ ∘ ξ) n = up σ n ∘ upr ξ n:= by
   induction n with
   | zero => rfl
-  | succ n ih => sorry --ext ⟨⟩ <;> (unfold up; dsimp [snoc, upr])
+  | succ n ih =>
+    ext ⟨⟩ <;> (unfold up; simp [snoc, upr, ih, Function.comp_apply])
 
 theorem rename_subst (σ ξ) (t : Exp) : (t.rename_exp ξ).subst_exp σ = t.subst_exp (σ ∘ ξ) := by
   induction t generalizing σ ξ
-  all_goals sorry
+  all_goals try simp[rename_exp, subst_exp]<;> grind
+  . rename_i dt fields h
+    simp [rename_exp, subst_exp]
+    sorry
+  . sorry
+  . rename_i q var exp h
+    simp [subst_exp]
+    rw[up_comp_ren_sb 1 ξ σ]
+    sorry
+  . sorry
   --all_goals grind [rename_exp, subst_exp, up_comp_ren_sb]
 
 
@@ -382,7 +315,6 @@ theorem ofRen_comp (ξ₁ ξ₂ : Nat → Nat): ofRen (ξ₁ ∘ ξ₂) = comp (
 theorem wk_app (n) : wk n = .Var (n + 1) := by
   rw [wk, ofRen]
 
--- register_simp_attr autosubst
 
 -- Rules from Fig. 1 in the paper.
 attribute [autosubst low]
