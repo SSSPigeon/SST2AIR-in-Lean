@@ -179,9 +179,7 @@ theorem rename_eq_subst_ofRen (ξ : Nat → Nat) : rename_exp ξ = subst_exp (of
   all_goals
     simp [rename_exp, subst_exp]
     rw[← ofRen_upr 1 ξ, ← upr_one]
-  . rename_i _ _ _ h
-    exact h (upr ξ 1)
-  . rename_i _ _ h
+    expose_names
     exact h (upr ξ 1)
 
 
@@ -230,11 +228,8 @@ theorem rename_subst (σ ξ) (t : Exp) : (t.rename_exp ξ).subst_exp σ = t.subs
     rw[up_comp_ren_sb es.length ξ σ, ← he (up σ es.length) (upr ξ es.length)]
     simp [rename_exp, subst_exp]
     intro a hmem; exact hes a hmem σ ξ
-  . rename_i _ _ _ h
-    simp only [subst_exp]
-    rw[up_comp_ren_sb 1 ξ σ, ← h (up σ 1) (upr ξ 1)]
-    simp only [rename_exp, upr_one, subst_exp]
-  . rename_i _ _ h
+  all_goals
+    expose_names
     simp only [subst_exp]
     rw[up_comp_ren_sb 1 ξ σ, ← h (up σ 1) (upr ξ 1)]
     simp only [rename_exp, upr_one, subst_exp]
@@ -436,9 +431,18 @@ def SbIsVar (σ : Nat → Exp) (n : Nat) :=
 
 
 theorem SbIsVar.up {σ : Nat → Exp} {n k} : SbIsVar σ n → SbIsVar (Exp.up σ k) (n + k) := by
-  rintro σk ⟨⟩ lt
-  . sorry
-  . sorry
+  induction k with
+  | zero => rintro σk ⟨⟩ lt <;> simp [Exp.up, σk lt]
+  | succ k ih =>
+    rintro σk ⟨⟩ lt
+    . simp only [Exp.up, snoc_zero]
+    . simp [Exp.up]
+      have:= ih σk
+      unfold SbIsVar at this
+      specialize this (Nat.succ_lt_succ_iff.mp lt)
+      rw[this]
+      simp[rename_exp]
+
 
 theorem SbIsBvar.zero (σ : Nat → Exp) : SbIsVar σ 0 := nofun
 
@@ -450,7 +454,14 @@ theorem subst_of_isClosed' {e : Exp} {k} {σ : Nat → Exp} :
   --   simp only [isClosed, decide_eq_true_eq] at h
   --   simp [subst, hσ h]
   --all_goals grind [subst_exp, isClosed, → SbIsVar.up]
-  all_goals try sorry
+  all_goals try simp[subst_exp] <;> grind[SbIsVar, isClosed]
+  . simp[subst_exp]
+    expose_names
+    simp [isClosed] at h
+    refine map_id''_mem exps ?_
+    intro x hmem
+    sorry
+  all_goals sorry
 
 
 
