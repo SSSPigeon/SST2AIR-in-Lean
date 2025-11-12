@@ -477,10 +477,6 @@ theorem subst_of_isClosed' {e : Exp} {k} {σ : Nat → Exp} :
     e.isClosed k → SbIsVar σ k → e.subst_exp σ = e := by
   intro h hσ
   induction e generalizing k σ
-  -- case bvar =>
-  --   simp only [isClosed, decide_eq_true_eq] at h
-  --   simp [subst, hσ h]
-  --all_goals grind [subst_exp, isClosed, → SbIsVar.up]
   all_goals try simp[subst_exp] <;> grind[SbIsVar, isClosed];
   . simp[subst_exp]
     expose_names
@@ -518,9 +514,21 @@ theorem subst_of_isClosed' {e : Exp} {k} {σ : Nat → Exp} :
     constructor
     . apply map_id''_mem; intro x hmem
       grind
-    . --have := @h_2 (k + es.length) (up σ es.length) (@SbIsVar.up σ k es.length h.1)
-      sorry
-  all_goals sorry
+    . exact @h_2 (k + es.length) (up σ es.length) h.1 ((@SbIsVar.up σ k es.length) hσ)
+  . simp [subst_exp]
+    expose_names
+    simp [isClosed] at h
+    exact @h_1 (k+1) (up σ 1) h ((@SbIsVar.up σ k 1) hσ)
+  . simp [subst_exp]
+    expose_names
+    simp [isClosed] at h
+    exact @h_1 (k+1) (up σ 1) h ((@SbIsVar.up σ k 1) hσ)
+  . simp [subst_exp]
+    expose_names
+    simp [isClosed] at h
+    apply map_id''_mem
+    intro x hmem
+    grind
 
 
 
