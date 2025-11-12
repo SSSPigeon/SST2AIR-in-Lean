@@ -471,66 +471,32 @@ theorem SbIsVar.up {σ : Nat → Exp} {n k} : SbIsVar σ n → SbIsVar (Exp.up �
       simp[rename_exp]
 
 
-theorem SbIsBvar.zero (σ : Nat → Exp) : SbIsVar σ 0 := nofun
+theorem SbIsVar.zero (σ : Nat → Exp) : SbIsVar σ 0 := nofun
 
 theorem subst_of_isClosed' {e : Exp} {k} {σ : Nat → Exp} :
     e.isClosed k → SbIsVar σ k → e.subst_exp σ = e := by
-  intro h hσ
-  induction e generalizing k σ
-  all_goals try simp[subst_exp] <;> grind[SbIsVar, isClosed];
-  . simp[subst_exp]
-    expose_names
-    simp only [isClosed, List.all_subtype, List.unattach_attach, List.all_eq_true] at h
-    refine map_id''_mem exps ?_
-    intro x hmem
-    exact h_1 x hmem (h x hmem) hσ
-  . simp[subst_exp]
-    expose_names
-    simp only [isClosed] at h
-    simp [Bool.and_eq_true] at h
+  intro h hσ; induction e generalizing k σ
+  all_goals try simp[subst_exp] <;> grind[SbIsVar, isClosed]
+  all_goals simp[subst_exp]; expose_names; simp [isClosed] at h
+  case _calllambda =>
     constructor
     . exact h_2 h.1 hσ
     . apply map_id''_mem
       intro x hmem
       grind
-      --exact h_1 x hmem (h.2 x hmem) hσ
-  . simp[subst_exp]
-    expose_names
-    simp [isClosed] at h
+  case _structctor =>
     simp [List.map_attach_eq_pmap, List.pmap_eq_map]
     apply map_id''_mem
     intro x hmem
     exact Prod.ext rfl (h_1 x hmem (h x.fst x.snd hmem) hσ)
-  . simp[subst_exp]
-    expose_names
-    simp [isClosed] at h
-    apply map_id''_mem
-    intro x hmem
-    grind
-    --exact h_1 x hmem (h x hmem) hσ
-  . simp [subst_exp]
-    expose_names
-    simp [isClosed] at h
+  case _let =>
     constructor
     . apply map_id''_mem; intro x hmem
       grind
     . exact @h_2 (k + es.length) (up σ es.length) h.1 ((@SbIsVar.up σ k es.length) hσ)
-  . simp [subst_exp]
-    expose_names
-    simp [isClosed] at h
-    exact @h_1 (k+1) (up σ 1) h ((@SbIsVar.up σ k 1) hσ)
-  . simp [subst_exp]
-    expose_names
-    simp [isClosed] at h
-    exact @h_1 (k+1) (up σ 1) h ((@SbIsVar.up σ k 1) hσ)
-  . simp [subst_exp]
-    expose_names
-    simp [isClosed] at h
-    apply map_id''_mem
-    intro x hmem
-    grind
+  case _quant | _lambda => exact @h_1 (k+1) (up σ 1) h ((@SbIsVar.up σ k 1) hσ)
+  all_goals apply map_id''_mem; intro x hmem; grind
 
 
-
-theorem subst_of_isClosed {e : Exp} (σ : Nat → Exp) : e.isClosed → e.subst_exp σ = e := sorry
-  --fun h => e.subst_of_isClosed' h (.zero _)
+theorem subst_of_isClosed {e : Exp} (σ : Nat → Exp) : e.isClosed → e.subst_exp σ = e :=
+  fun h => e.subst_of_isClosed' h (.zero _)
