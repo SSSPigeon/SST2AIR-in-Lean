@@ -481,13 +481,45 @@ theorem subst_of_isClosed' {e : Exp} {k} {σ : Nat → Exp} :
   --   simp only [isClosed, decide_eq_true_eq] at h
   --   simp [subst, hσ h]
   --all_goals grind [subst_exp, isClosed, → SbIsVar.up]
-  all_goals try simp[subst_exp] <;> grind[SbIsVar, isClosed]
+  all_goals try simp[subst_exp] <;> grind[SbIsVar, isClosed];
   . simp[subst_exp]
     expose_names
     simp only [isClosed, List.all_subtype, List.unattach_attach, List.all_eq_true] at h
     refine map_id''_mem exps ?_
     intro x hmem
     exact h_1 x hmem (h x hmem) hσ
+  . simp[subst_exp]
+    expose_names
+    simp only [isClosed] at h
+    simp [Bool.and_eq_true] at h
+    constructor
+    . exact h_2 h.1 hσ
+    . apply map_id''_mem
+      intro x hmem
+      grind
+      --exact h_1 x hmem (h.2 x hmem) hσ
+  . simp[subst_exp]
+    expose_names
+    simp [isClosed] at h
+    simp [List.map_attach_eq_pmap, List.pmap_eq_map]
+    apply map_id''_mem
+    intro x hmem
+    exact Prod.ext rfl (h_1 x hmem (h x.fst x.snd hmem) hσ)
+  . simp[subst_exp]
+    expose_names
+    simp [isClosed] at h
+    apply map_id''_mem
+    intro x hmem
+    grind
+    --exact h_1 x hmem (h x hmem) hσ
+  . simp [subst_exp]
+    expose_names
+    simp [isClosed] at h
+    constructor
+    . apply map_id''_mem; intro x hmem
+      grind
+    . --have := @h_2 (k + es.length) (up σ es.length) (@SbIsVar.up σ k es.length h.1)
+      sorry
   all_goals sorry
 
 
