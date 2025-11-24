@@ -11,20 +11,20 @@ inductive WsTm : Nat → Exp → Prop
     WsTm n (.Var i)
 
   | call : ∀ n fn typs exps,
-    ∀ e ∈ exps, WsTm n e →
+    (∀ e ∈ exps, WsTm n e) →
     WsTm n (.Call fn typs exps)
 
   | callLambda : ∀ n lam args,
     WsTm n lam →
-    ∀ e ∈ args, WsTm n e →
+    (∀ e ∈ args, WsTm n e) →
     WsTm n (.CallLambda lam args)
 
   | structor : ∀ n dt fields,
-    ∀ p ∈ fields, WsTm n p.2 →
+    (∀ p ∈ fields, WsTm n p.2) →
     WsTm n (.StructCtor dt fields)
 
   | tuplector : ∀ n size data,
-    ∀ e ∈ data, WsTm n e →
+    (∀ e ∈ data, WsTm n e) →
     WsTm n (.TupleCtor size data)
 
   | unary : ∀ n op arg,
@@ -47,7 +47,7 @@ inductive WsTm : Nat → Exp → Prop
     WsTm n (.If cond b₁ b₂)
 
   | _let : ∀ n tys es exp,
-    ∀ e ∈ es, WsTm (n + List.length es) e →
+    (∀ e ∈ es, WsTm (n + List.length es) e) →
     WsTm (n + List.length es) exp →
     WsTm n (.Let tys es exp)
 
@@ -60,5 +60,24 @@ inductive WsTm : Nat → Exp → Prop
     WsTm n (.Lambda var exp)
 
   | arrayLiteral : ∀ n elems,
-    ∀ e ∈ elems, WsTm n e →
+    (∀ e ∈ elems, WsTm n e) →
     WsTm n (.ArrayLiteral elems)
+
+namespace Inversion
+
+attribute [local grind] WsTm
+theorem inv_var : ∀ n i,  WsTm n (.Var i) → i < n := by grind
+theorem inv_call : ∀ n fn typs exps, WsTm n (.Call fn typs exps) →
+  (∀ e ∈ exps, WsTm n e) := by grind
+
+
+
+
+
+
+theorem ws_increase (n m : Nat) (e : Exp) : WsTm n e → WsTm (n + m) e := by
+  induction e;
+  all_goals try grind[WsTm]
+  . sorry
+  . sorry
+  . sorry
