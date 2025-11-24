@@ -141,7 +141,7 @@ inductive Typ where
   | AnonymousClosure (typs: List Typ) (typ: Typ) --rsg: also a usize parameter. Don't know what it's for.
   | FnDef (fn: Ident) (typs: List Typ)
   | AirNamed (str : String)
-deriving Repr, Inhabited, Hashable
+deriving Repr, Inhabited, Hashable, BEq
 
 /-- Constant value literals -/
 inductive Const

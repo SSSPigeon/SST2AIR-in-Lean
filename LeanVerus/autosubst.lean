@@ -155,11 +155,6 @@ theorem ofRen_upr (n ξ) : ofRen (upr ξ n) = up (ofRen ξ) n := by
     ext ⟨⟩ <;> simp [ofRen, upr, up, snoc]
     . rw[← ih]; simp [ofRen, rename_exp]
 
-
-
-#check List.mem_map
-#check List.ext_getElem
-#check @List.getElem_of_eq
 theorem rename_eq_subst_ofRen (ξ : Nat → Nat) : rename_exp ξ = subst_exp (ofRen ξ) := by
   ext t; --fun_induction rename_exp
   induction t generalizing ξ
