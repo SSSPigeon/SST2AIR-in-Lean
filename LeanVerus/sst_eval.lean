@@ -87,8 +87,8 @@ inductive Eval: var_env → func_env → Exp → Exp → Prop where
 
   | unary_proj :
       ∀ (v : var_env) (f : func_env) (e : Exp)
-        (dt dt': Ident) (var: String) (fields: List (String × Exp)),
-      WsTm v.length (.Unaryr (.Proj dt var) e) →
-      Eval v f e (.StructCtor dt' fields) →
-      Eval v f (.Unaryr (.IsVariant dt var) e)
-        (.Const (.Bool (dt = dt' ∧ fields.any (fun p => p.1 = var))))
+        (dt: Ident) (field: String) (fields: List (String × Exp)),
+      WsTm v.length (.Unaryr (.Proj field) e) →
+      Eval v f e (.StructCtor dt fields) →
+      Eval v f (.Unaryr (.Proj field) e)
+        ((fields.find? (fun p => p.1 = field)).getD ("dummy", (.StructCtor dt fields))).2
