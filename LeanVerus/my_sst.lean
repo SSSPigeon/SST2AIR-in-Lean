@@ -298,7 +298,7 @@ deriving Repr, Inhabited, DecidableEq, Hashable
 
 inductive CallFun where
   | Fun (fn : Ident) -- an optional resolved Fun for methods currently not implemented
-  -- | Recursive (name : Ident)
+  | Recursive (name : Ident)
   -- | InternalFun (name : Ident)
 deriving Repr, Inhabited, DecidableEq, Hashable
 
