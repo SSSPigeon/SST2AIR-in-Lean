@@ -230,7 +230,7 @@ inductive UnaryOpr where
 
     In Verus, this is called a `Field`, and is defined under `UnaryOpr`.
   -/
-  | Proj (dt : Ident) (variant : String) (field : String)
+  | Proj (field : String)
   /-
     A projection out of a tuple. For example `t.2.1`
 
