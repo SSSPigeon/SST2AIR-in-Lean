@@ -138,10 +138,57 @@ inductive Typ where
     use the datatype map in `Parser.lean`.
   -/
   | Enum (name : Ident) (params : List Typ)
-  | AnonymousClosure (typs: List Typ) (typ: Typ) --rsg: also a usize parameter. Don't know what it's for.
+  | AnonymousClosure (typs: List Typ) (typ: Typ) --SR: also a usize parameter. Don't know what it's for.
   | FnDef (fn: Ident) (typs: List Typ)
   | AirNamed (str : String)
 deriving Repr, Inhabited, Hashable, BEq
+
+mutual
+def Typ.hasDecEq (t t' : Typ) : Decidable (t = t') := by
+  cases t <;> cases t' <;>
+  try { apply isFalse ; intro h ; injection h }
+  case Bool.Bool => apply isTrue; rfl
+  case Int.Int v₁ v₂ | Float.Float v₁ v₂ | TypParam.TypParam v₁ v₂ | AirNamed.AirNamed v₁ v₂ =>
+    exact match decEq v₁ v₂ with
+    | isTrue h => isTrue (by rw [h])
+    | isFalse _ => isFalse (by intro h; injection h; contradiction)
+  case Array.Array v₁ v₂ =>
+    exact match Typ.hasDecEq v₁ v₂ with
+    | isTrue h => isTrue (by rw [h])
+    | isFalse _ => isFalse (by intro h; injection h; contradiction)
+  case Decorated.Decorated p₁ ty₁ p₂ ty₂ | Primitive.Primitive p₁ ty₁ p₂ ty₂ =>
+    exact match decEq p₁ p₂, Typ.hasDecEq ty₁ ty₂ with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₂; simp [h₁] at h₂)
+  case Tuple.Tuple v₁ v₂ v₁' v₂' =>
+    exact match Typ.hasDecEq v₁ v₁', Typ.hasDecEq v₂ v₂' with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₂; simp [h₁] at h₂)
+  case Struct.Struct n₁ p₁ n₂ p₂ | Enum.Enum n₁ p₁ n₂ p₂ | FnDef.FnDef n₁ p₁ n₂ p₂ =>
+    exact match decEq n₁ n₂, Typ.hasListDec p₁ p₂ with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₂; simp [h₁] at h₂)
+  case SpecFn n₁ p₁ n₂ p₂ | AnonymousClosure.AnonymousClosure n₁ p₁ n₂ p₂=>
+    exact match Typ.hasListDec n₁ n₂, Typ.hasDecEq p₁ p₂ with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₂; simp [h₁] at h₂)
+
+def Typ.hasListDec (ts₁ ts₂ : List Typ) : Decidable (ts₁ = ts₂) :=
+  match ts₁, ts₂ with
+  | [], [] => isTrue rfl
+  | _::_, [] | [], _::_ => isFalse (by intro; contradiction)
+  | t₁ :: tl₁, t₂ :: tl₂ =>
+    match Typ.hasDecEq t₁ t₂ with
+    | isTrue h₁ =>
+        match Typ.hasListDec tl₁ tl₂ with
+        | isTrue h₂ => isTrue (by subst h₁ h₂; rfl)
+        | isFalse _ => isFalse (by simp; intros; assumption)
+    | isFalse _ => isFalse (by simp; intros; contradiction)
+end
 
 /-- Constant value literals -/
 inductive Const
@@ -222,8 +269,10 @@ inductive UnaryOp where
   | Trigger
   /-- Return raw bits of a float as an int -/
   | FloatToBits
-deriving Repr, Inhabited, Hashable
+deriving Repr, Inhabited, Hashable, DecidableEq
 
+
+  /-- SR: TODO: add IntegerTypeBound? -/
 inductive UnaryOpr where
   /--
     A field projection out of a structure. For example `p.fst`.
@@ -252,6 +301,22 @@ inductive UnaryOpr where
   | HasType (t : Typ)
 deriving Repr, Inhabited, Hashable
 
+def UnaryOpr.hasDecEq (op₁ op₂ : UnaryOpr) : Decidable (op₁ = op₂) := by
+  cases op₁ <;> cases op₂ <;>
+  try { apply isFalse ; intro h ; injection h }
+  case Proj.Proj f₁ f₂ =>
+    exact match decEq f₁ f₂ with
+    | isTrue h => isTrue (by rw [h])
+    | isFalse _ => isFalse (by intro h; injection h; contradiction)
+  case Box.Box t₁ t₂ | Unbox.Unbox t₁ t₂ | HasType.HasType t₁ t₂ =>
+    exact match Typ.hasDecEq t₁ t₂ with
+    | isTrue h => isTrue (by rw [h])
+    | isFalse _ => isFalse (by intro h; injection h; contradiction)
+  case IsVariant.IsVariant dt₁ var₁ dt₂ var₂ =>
+    exact match decEq dt₁ dt₂, decEq var₁ var₂ with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₂; simp [h₁] at h₂)
 
 /--
   Primitive binary operations.
@@ -341,8 +406,100 @@ inductive Exp where
   --| MatchBlock (scrutinee : Exp × Typ) (body : Exp)
 deriving Repr, Inhabited, Hashable
 
-#check Exp.recOn
-#check (1, 2)
+mutual
+def Exp.hasDecEq (e₁ e₂ : Exp) : Decidable (e₁ = e₂) := by
+  cases e₁ <;> cases e₂ <;>
+  try { apply isFalse ; intro h ; injection h }
+  case Const.Const c₁ c₂ =>
+    exact match decEq c₁ c₂ with
+    | isTrue h => isTrue (by rw [h])
+    | isFalse _ => isFalse (by intro h; injection h; contradiction)
+  case Var.Var x₁ x₂ => exact match decEq x₁ x₂ with
+    | isTrue h => isTrue (by rw [h])
+    | isFalse _ => isFalse (by intro h; injection h; contradiction)
+  case Unary.Unary op₁ arg₁ op₂ arg₂ =>
+    exact match decEq op₁ op₂, Exp.hasDecEq arg₁ arg₂ with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₂; simp [h₁] at h₂)
+  case Unaryr.Unaryr op₁ arg₁ op₂ arg₂ =>
+    exact match UnaryOpr.hasDecEq op₁ op₂, Exp.hasDecEq arg₁ arg₂ with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₂; simp [h₁] at h₂)
+  case Binary.Binary op₁ arg₁₁ arg₂₁ op₂ arg₁₂ arg₂₂ =>
+    exact match decEq op₁ op₂, Exp.hasDecEq arg₁₁ arg₁₂, Exp.hasDecEq arg₂₁ arg₂₂ with
+    | isTrue h₁, isTrue h₂, isTrue h₃ => isTrue (by rw [h₁, h₂, h₃])
+    | isFalse h₁, _,  _ | _, isFalse h₁, _ | _, _, isFalse h₁ =>
+      isFalse (by intro h₃; simp [h₁] at h₃)
+  case If.If c₁ b₁₁ b₁₂ c₂ b₂₁ b₂₂ =>
+    exact match Exp.hasDecEq c₁ c₂, Exp.hasDecEq b₁₁ b₂₁, Exp.hasDecEq b₁₂ b₂₂ with
+    | isTrue h₁, isTrue h₂, isTrue h₃ => isTrue (by rw [h₁, h₂, h₃])
+    | isFalse h₁, _,  _ | _, isFalse h₁, _ | _, _, isFalse h₁ =>
+      isFalse (by intro h₃; simp [h₁] at h₃)
+  case Quant.Quant q₁ var₁ exp₁ q₂ var₂ exp₂ =>
+    exact match decEq q₁ q₂, Typ.hasDecEq var₁ var₂, Exp.hasDecEq exp₁ exp₂ with
+    | isTrue h₁, isTrue h₂, isTrue h₃ => isTrue (by rw [h₁, h₂, h₃])
+    | isFalse h₁, _,  _ | _, isFalse h₁, _ | _, _,  isFalse h₁ =>
+      isFalse (by intro h₃; simp [h₁] at h₃)
+  case Lambda.Lambda var₁ exp₁ var₂ exp₂ =>
+    exact match Typ.hasDecEq var₁ var₂, Exp.hasDecEq exp₁ exp₂ with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₂; simp [h₁] at h₂)
+  case TupleCtor.TupleCtor size₁ data₁ size₂ data₂ =>
+    exact match decEq size₁ size₂, Exp.hasListDec data₁ data₂ with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₂; simp [h₁] at h₂)
+  case StructCtor.StructCtor dt₁ fields₁ dt₂ fields₂ =>
+    exact match decEq dt₁ dt₂, Exp.hasFieldsDec fields₁ fields₂ with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₂; simp [h₁] at h₂)
+  case Call.Call fn₁ typs₁ exps₁ fn₂ typs₂ exps₂ =>
+    exact match decEq fn₁ fn₂, Typ.hasListDec typs₁ typs₂, Exp.hasListDec exps₁ exps₂ with
+    | isTrue h₁, isTrue h₂, isTrue h₃ => isTrue (by rw [h₁, h₂, h₃])
+    | isFalse h₁, _,  _ | _, isFalse h₁, _ | _, _, isFalse h₁ =>
+      isFalse (by intro h₃; simp [h₁] at h₃)
+  case CallLambda.CallLambda lam₁ args₁ lam₂ args₂ =>
+    exact match Exp.hasDecEq lam₁ lam₂, Exp.hasListDec args₁ args₂ with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₂; simp [h₁] at h₂)
+  case Let.Let ty₁ es₁ exp₁ ty₂ es₂ exp₂ =>
+    exact match Typ.hasListDec ty₁ ty₂, Exp.hasListDec es₁ es₂, Exp.hasDecEq exp₁ exp₂ with
+    | isTrue h₁, isTrue h₂, isTrue h₃ => isTrue (by rw [h₁, h₂, h₃])
+    | isFalse h₁, _,  _ | _, isFalse h₁, _ | _, _, isFalse h₁ =>
+      isFalse (by intro h₃; simp [h₁] at h₃)
+  case ArrayLiteral.ArrayLiteral elems₁ elems₂ =>
+    exact match Exp.hasListDec elems₁ elems₂ with
+    | isTrue h => isTrue (by rw [h])
+    | isFalse _ => isFalse (by intro h; injection h; contradiction)
+
+def Exp.hasListDec (es₁ es₂ : List Exp) : Decidable (es₁ = es₂) :=
+  match es₁, es₂ with
+  | [], [] => isTrue rfl
+  | _::_, [] | [], _::_ => isFalse (by intro; contradiction)
+  | e₁ :: el₁, e₂ :: el₂ =>
+    match Exp.hasDecEq e₁ e₂ with
+    | isTrue h₁ =>
+        match Exp.hasListDec el₁ el₂ with
+        | isTrue h₂ => isTrue (by subst h₁ h₂; rfl)
+        | isFalse _ => isFalse (by simp; intros; assumption)
+    | isFalse _ => isFalse (by simp; intros; contradiction)
+
+def Exp.hasFieldsDec (fs₁ fs₂ : List (String × Exp)) : Decidable (fs₁ = fs₂) :=
+  match fs₁, fs₂ with
+  | [], [] => isTrue rfl
+  | _::_, [] | [], _::_ => isFalse (by intro; contradiction)
+  | (f₁, e₁) :: fl₁, (f₂, e₂) :: fl₂ =>
+    match decEq f₁ f₂, Exp.hasDecEq e₁ e₂, Exp.hasFieldsDec fl₁ fl₂ with
+    | isTrue h₁, isTrue h₂, isTrue h₃ => isTrue (by rw [h₁, h₂, h₃])
+    | isFalse h₁, _,  _ | _, isFalse h₁, _ | _, _,  isFalse h₁ =>
+      isFalse (by intro h₃; simp [h₁] at h₃)
+end
+
 /--
 Induction rule for `TermType`: the default induction tactic doesn't yet support
 nested or mutual induction types.

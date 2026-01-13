@@ -92,3 +92,17 @@ inductive Eval: var_env → func_env → Exp → Exp → Prop where
       Eval v f e (.StructCtor dt fields) →
       Eval v f (.Unaryr (.Proj field) e)
         ((fields.find? (fun p => p.1 = field)).getD ("dummy", (.StructCtor dt fields))).2
+
+  /-- Binary -/
+  | binary_and_true :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃ : Exp),
+      WsTm v.length (.Binary .And arg₁ arg₂) →
+      Eval v f arg₁ (.Const (.Bool true)) →
+      Eval v f arg₂ arg₃ →
+      Eval v f (.Binary .And arg₁ arg₂) arg₃
+
+  | binary_and_false :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ : Exp),
+      WsTm v.length (.Binary .And arg₁ arg₂) →
+      Eval v f arg₁ (.Const (.Bool false)) →
+      Eval v f (.Binary .And arg₁ arg₂) (.Const (.Bool false))
