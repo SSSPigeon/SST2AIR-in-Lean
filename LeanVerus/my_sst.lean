@@ -102,7 +102,7 @@ deriving Repr, Inhabited, DecidableEq, Hashable
 
 /-- Rust type, but without Box, Rc, Arc, etc. -/
 inductive Typ where
-  | Bool
+  | _Bool
   | Int (i: IntRange)
   | Float (width: UInt32)
   | Array (t : Typ)       /- Array, ignore length in Rust     -/
@@ -147,7 +147,7 @@ mutual
 def Typ.hasDecEq (t t' : Typ) : Decidable (t = t') := by
   cases t <;> cases t' <;>
   try { apply isFalse ; intro h ; injection h }
-  case Bool.Bool => apply isTrue; rfl
+  case _Bool._Bool => apply isTrue; rfl
   case Int.Int v₁ v₂ | Float.Float v₁ v₂ | TypParam.TypParam v₁ v₂ | AirNamed.AirNamed v₁ v₂ =>
     exact match decEq v₁ v₂ with
     | isTrue h => isTrue (by rw [h])
@@ -189,6 +189,37 @@ def Typ.hasListDec (ts₁ ts₂ : List Typ) : Decidable (ts₁ = ts₂) :=
         | isFalse _ => isFalse (by simp; intros; assumption)
     | isFalse _ => isFalse (by simp; intros; contradiction)
 end
+
+mutual
+def Typ.syntactic_eq (t t': Typ) : Option Bool :=
+  match t, t' with
+  | _Bool, _Bool => some true
+  | Int i₁, Int i₂ => some (i₁ = i₂)
+  | TypParam s₁, TypParam s₂ =>
+      if s₁ = s₂ then some true else none
+  | AirNamed s₁, AirNamed s₂ => some (s₁ = s₂)
+  | SpecFn args₁ r₁, SpecFn args₂ r₂ =>
+      match Typ.syntactic_eq r₁ r₂ with
+      | some true =>
+          match Typ.syntactic_eq_list args₁ args₂ with
+          | some true => some true
+          | some false => some false
+          | none => none
+      | some false => some false
+      | none => none
+  | _, _ => some false
+
+def Typ.syntactic_eq_list (ts₁ ts₂ : List Typ) : Option Bool :=
+  match ts₁, ts₂ with
+  | [], [] => some true
+  | _::_, [] | [], _::_ => some false
+  | t₁ :: tl₁, t₂ :: tl₂ =>
+    match Typ.syntactic_eq t₁ t₂ with
+    | some true => Typ.syntactic_eq_list tl₁ tl₂
+    | some false => some false
+    | none => none
+end
+
 
 /-- Constant value literals -/
 inductive Const
@@ -499,6 +530,39 @@ def Exp.hasFieldsDec (fs₁ fs₂ : List (String × Exp)) : Decidable (fs₁ = f
     | isFalse h₁, _,  _ | _, isFalse h₁, _ | _, _,  isFalse h₁ =>
       isFalse (by intro h₃; simp [h₁] at h₃)
 end
+
+def Exp.syntactic_eq (e e' : Exp) : Option Bool :=
+  let def_eq (b : Bool) : Option Bool := if b then some true else some false
+  match e, e' with
+  | Const c₁, Const c₂ =>
+      match c₁, c₂ with
+      | Const.Bool b₁, Const.Bool b₂ => some (b₁ = b₂)
+      | Const.Int i₁, Const.Int i₂ => some (i₁ = i₂)
+      | Const.StrSlice s₁, Const.StrSlice s₂ => some (s₁ = s₂)
+      | Const.Char c₁, Const.Char c₂ => some (c₁ = c₂)
+      | _, _ => none
+  | Var x₁, Var x₂ => def_eq (x₁ = x₂)
+  | Unary op₁ arg₁, Unary op₂ arg₂ =>
+    match Exp.syntactic_eq arg₁ arg₂ with
+    | some true => some (op₁ = op₂)
+    | some false => some false
+    | none => none
+  | Unaryr op₁ arg₁, Unaryr op₂ arg₂ =>
+    let arg_eq := Exp.syntactic_eq arg₁ arg₂
+    let op_eq :=
+      match op₁, op₂ with
+      | .HasType l₁, .HasType l₂ =>
+        match (Typ.syntactic_eq l₁ l₂) with
+        | some b => def_eq b
+        | none => none
+      | .IsVariant dt₁ var₁, .IsVariant dt₂ var₂ =>
+        def_eq (dt₁ = dt₂ ∧ var₁ = var₂)
+      | .Proj f₁, .Proj f₂ => def_eq (f₁ = f₂)
+      | _, _ => some false
+    match arg_eq, op_eq with
+    | some b₁, some b₂ => def_eq (b₁ ∧ b₂)
+    | _, _ => none
+  | _, _ => none
 
 /--
 Induction rule for `TermType`: the default induction tactic doesn't yet support

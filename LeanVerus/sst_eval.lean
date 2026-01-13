@@ -94,15 +94,140 @@ inductive Eval: var_env → func_env → Exp → Exp → Prop where
         ((fields.find? (fun p => p.1 = field)).getD ("dummy", (.StructCtor dt fields))).2
 
   /-- Binary -/
-  | binary_and_true :
+  | binary_and_fst_true :
       ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃ : Exp),
       WsTm v.length (.Binary .And arg₁ arg₂) →
       Eval v f arg₁ (.Const (.Bool true)) →
       Eval v f arg₂ arg₃ →
       Eval v f (.Binary .And arg₁ arg₂) arg₃
 
-  | binary_and_false :
+  | binary_and_fst_false :
       ∀ (v : var_env) (f : func_env) (arg₁ arg₂ : Exp),
       WsTm v.length (.Binary .And arg₁ arg₂) →
       Eval v f arg₁ (.Const (.Bool false)) →
       Eval v f (.Binary .And arg₁ arg₂) (.Const (.Bool false))
+
+  | binary_and_snd_true :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃ : Exp),
+      WsTm v.length (.Binary .And arg₁ arg₂) →
+      Eval v f arg₁ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f arg₂ (.Const (.Bool true)) →
+      Eval v f (.Binary .And arg₁ arg₂) arg₃
+
+  | binary_and_snd_false :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃ : Exp),
+      WsTm v.length (.Binary .And arg₁ arg₂) →
+      Eval v f arg₁ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f arg₂ (.Const (.Bool false)) →
+      Eval v f (.Binary .And arg₁ arg₂) (.Const (.Bool false))
+
+  | binary_and_other :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃ arg₄: Exp),
+      WsTm v.length (.Binary .And arg₁ arg₂) →
+      Eval v f arg₁ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f arg₂ arg₄ → arg₄ ≠ .Const (.Bool true) → arg₄ ≠ .Const (.Bool false) →
+      Eval v f (.Binary .And arg₁ arg₂) (.Binary .And arg₃ arg₄)
+
+  | binary_or_fst_true :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ : Exp),
+      WsTm v.length (.Binary .Or arg₁ arg₂) →
+      Eval v f arg₁ (.Const (.Bool true)) →
+      Eval v f (.Binary .Or arg₁ arg₂) (.Const (.Bool true))
+
+  | binary_or_fst_false :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃ : Exp),
+      WsTm v.length (.Binary .Or arg₁ arg₂) →
+      Eval v f arg₁ (.Const (.Bool false)) →
+      Eval v f arg₂ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f (.Binary .Or arg₁ arg₂) arg₃
+
+  | binary_or_snd_true :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃ : Exp),
+      WsTm v.length (.Binary .Or arg₁ arg₂) →
+      Eval v f arg₁ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f arg₂ (.Const (.Bool true)) →
+      Eval v f (.Binary .Or arg₁ arg₂) (.Const (.Bool true))
+
+  | binary_or_snd_false :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃ : Exp),
+      WsTm v.length (.Binary .Or arg₁ arg₂) →
+      Eval v f arg₁ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f arg₂ (.Const (.Bool false)) →
+      Eval v f (.Binary .Or arg₁ arg₂) arg₃
+
+  | binary_or_other :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃ arg₄: Exp),
+      WsTm v.length (.Binary .Or arg₁ arg₂) →
+      Eval v f arg₁ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f arg₂ arg₄ → arg₄ ≠ .Const (.Bool true) → arg₄ ≠ .Const (.Bool false) →
+      Eval v f (.Binary .Or arg₁ arg₂) (.Binary .Or arg₃ arg₄)
+
+  | binary_xor_both :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂: Exp) (b₁ b₂ : Bool),
+      WsTm v.length (.Binary .Xor arg₁ arg₂) →
+      Eval v f arg₁ (.Const (.Bool b₁)) →
+      Eval v f arg₂ (.Const (.Bool b₂)) →
+      Eval v f (.Binary .Xor arg₁ arg₂) (.Unary .Not (.Const (.Bool ((b₁ ∧ ¬ b₂) ∨(¬ b₁ ∧ b₂)))))
+
+  | binary_xor_fst_true :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃: Exp),
+      WsTm v.length (.Binary .Xor arg₁ arg₂) →
+      Eval v f arg₁ (.Const (.Bool true)) →
+      Eval v f arg₂ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f (.Binary .Xor arg₁ arg₂) (.Unary .Not arg₃)
+
+  | binary_xor_fst_false :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃: Exp),
+      WsTm v.length (.Binary .Xor arg₁ arg₂) →
+      Eval v f arg₁ (.Const (.Bool false)) →
+      Eval v f arg₂ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f (.Binary .Xor arg₁ arg₂) arg₃
+
+  | binary_xor_snd_true :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃: Exp),
+      WsTm v.length (.Binary .Xor arg₁ arg₂) →
+      Eval v f arg₁ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f arg₂ (.Const (.Bool true)) →
+      Eval v f (.Binary .Xor arg₁ arg₂) (.Unary .Not arg₃)
+
+  | binary_xor_snd_false :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃: Exp),
+      WsTm v.length (.Binary .Xor arg₁ arg₂) →
+      Eval v f arg₁ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f arg₂ (.Const (.Bool false)) →
+      Eval v f (.Binary .Xor arg₁ arg₂) arg₃
+
+  | binary_implies_fst_true :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃: Exp),
+      WsTm v.length (.Binary .Implies arg₁ arg₂) →
+      Eval v f arg₁ (.Const (.Bool true)) →
+      Eval v f arg₂ arg₃ →
+      Eval v f (.Binary .Implies arg₁ arg₂) arg₃
+
+  | binary_implies_fst_false :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ : Exp),
+      WsTm v.length (.Binary .Implies arg₁ arg₂) →
+      Eval v f arg₁ (.Const (.Bool false)) →
+      Eval v f (.Binary .Implies arg₁ arg₂) (.Const (.Bool true))
+
+  -- https://github.com/verus-lang/verus/blob/main/source/vir/src/interpreter.rs#L1422
+  | binary_implies_snd_true :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃: Exp),
+      WsTm v.length (.Binary .Implies arg₁ arg₂) →
+      Eval v f arg₁ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f arg₂ (.Const (.Bool true)) →
+      Eval v f (.Binary .Implies arg₁ arg₂) (.Const (.Bool true))
+
+  | binary_implies_snd_false :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃: Exp),
+      WsTm v.length (.Binary .Implies arg₁ arg₂) →
+      Eval v f arg₁ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool false) →
+      Eval v f arg₂ (.Const (.Bool false)) →
+      Eval v f (.Binary .Implies arg₁ arg₂) (.Unary .Not arg₃)
+
+  | binary_implies_other :
+      ∀ (v : var_env) (f : func_env) (arg₁ arg₂ arg₃ arg₄: Exp),
+      WsTm v.length (.Binary .Implies arg₁ arg₂) →
+      Eval v f arg₁ arg₃ → arg₃ ≠ .Const (.Bool true) → arg₃ ≠ .Const (.Bool  false) →
+      Eval v f arg₂ arg₄ → arg₄ ≠ .Const (.Bool true) → arg₄ ≠ .Const (.Bool false) →
+      Eval v f (.Binary .Implies arg₁ arg₂) (.Binary .Implies arg₃ arg₄)
