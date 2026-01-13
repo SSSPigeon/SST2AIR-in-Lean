@@ -531,6 +531,7 @@ def Exp.hasFieldsDec (fs₁ fs₂ : List (String × Exp)) : Decidable (fs₁ = f
       isFalse (by intro h₃; simp [h₁] at h₃)
 end
 
+mutual
 def Exp.syntactic_eq (e e' : Exp) : Option Bool :=
   let def_eq (b : Bool) : Option Bool := if b then some true else some false
   match e, e' with
@@ -556,13 +557,52 @@ def Exp.syntactic_eq (e e' : Exp) : Option Bool :=
         | some b => def_eq b
         | none => none
       | .IsVariant dt₁ var₁, .IsVariant dt₂ var₂ =>
-        def_eq (dt₁ = dt₂ ∧ var₁ = var₂)
+        def_eq (dt₁ = dt₂ && var₁ = var₂)
       | .Proj f₁, .Proj f₂ => def_eq (f₁ = f₂)
       | _, _ => some false
     match arg_eq, op_eq with
-    | some b₁, some b₂ => def_eq (b₁ ∧ b₂)
+    | some b₁, some b₂ => def_eq (b₁ && b₂)
     | _, _ => none
+  | Binary op₁ arg₁₁ arg₁₂, Binary op₂ arg₂₁ arg₂₂ =>
+    let arg₁_eq := Exp.syntactic_eq arg₁₁ arg₂₁
+    let arg₂_eq := Exp.syntactic_eq arg₁₂ arg₂₂
+    let op_eq := op₁ = op₂
+    match arg₁_eq, arg₂_eq with
+    | some b₁, some b₂ => def_eq (b₁ && b₂ && op_eq)
+    | _, _ => none
+  | If c₁ b₁₁ b₁₂, If c₂ b₂₁ b₂₂ =>
+    let c_eq := Exp.syntactic_eq c₁ c₂
+    let b₁_eq := Exp.syntactic_eq b₁₁ b₂₁
+    let b₂_eq := Exp.syntactic_eq b₁₂ b₂₂
+    match c_eq, b₁_eq, b₂_eq with
+    | some b₁, some b₂, some b₃ => def_eq (b₁ && b₂ && b₃)
+    | _, _, _ => none
+  | CallLambda lam₁ args₁, CallLambda lam₂ args₂ =>
+    let lam_eq := Exp.syntactic_eq lam₁ lam₂
+    let args_eq := Exp.syntactic_eq_list args₁ args₂
+    match lam_eq, args_eq with
+    | some b₁, some b₂ => def_eq (b₁ && b₂)
+    | _, _ => none
+  | Call fn₁ _ exps₁, Call fn₂ _ exps₂ =>
+    let fn_eq := fn₁ = fn₂
+    if exps₁.length == exps₂.length then
+      let exps_eq := Exp.syntactic_eq_list exps₁ exps₂
+      match exps_eq with
+      | some b₂ => def_eq (fn_eq && b₂)
+      | _ => none
+    else none
   | _, _ => none
+
+def Exp.syntactic_eq_list (es₁ es₂ : List Exp) : Option Bool :=
+  match es₁, es₂ with
+  | [], [] => some true
+  | _::_, [] | [], _::_ => some false
+  | e₁ :: el₁, e₂ :: el₂ =>
+    match Exp.syntactic_eq e₁ e₂ with
+    | some true => Exp.syntactic_eq_list el₁ el₂
+    | some false => some false
+    | none => none
+end
 
 /--
 Induction rule for `TermType`: the default induction tactic doesn't yet support
