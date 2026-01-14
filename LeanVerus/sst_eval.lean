@@ -5,7 +5,7 @@ open VerusLean Std
 
 abbrev var_env := List Exp
 
-abbrev typ_env := Typ → Typ
+abbrev typ_env := Typ → Typ --String → Typ
 
 abbrev func_env := Typ → Exp
 
@@ -38,23 +38,23 @@ inductive Eval: var_env → func_env → Exp → Exp → Prop where
   | unary_not_other:
       ∀ (v: var_env) (f: func_env) (arg arg_res: Exp),
       WsTm v.length (.Unary .Not arg) →
-      Eval v f arg arg_res →
+      Eval v f arg arg_res → arg_res ≠ .Const (.Bool true) → arg_res ≠ .Const (.Bool false) →
       Eval v f (.Unary .Not arg) (.Unary .Not arg_res)
 
   /- TODO : bitnot i128 -/
-  | unary_bitnot_none :
-      ∀ (v : var_env) (f : func_env) (i : Int) (i' : Int),
+  | unary_bitnot_nwidth :
+      ∀ (v : var_env) (f : func_env) (i : Int) (arg : Exp) ,
       WsTm v.length (.Unary (.BitNot none) (.Const (.Int i))) →
-      Eval v f (.Const (.Int i)) (.Const (.Int i')) →
-      Eval v f (.Unary (.BitNot none) (.Const (.Int i)))
-              (.Const (.Int (~~~i')))
+      Eval v f arg (.Const (.Int i)) →
+      Eval v f (.Unary (.BitNot none) arg)
+              (.Const (.Int (~~~i)))
 
   | unary_bitnot_width :
-      ∀ (v : var_env) (f : func_env) (w : Nat) (i : Int) (i' : Int),
+      ∀ (v : var_env) (f : func_env) (w : Nat) (i : Int) (arg : Exp),
       WsTm v.length (.Unary (.BitNot (some w)) (.Const (.Int i))) →
-      Eval v f (.Const (.Int i)) (.Const (.Int i')) →
-      Eval v f (.Unary (.BitNot (some w)) (.Const (.Int i)))
-              (.Const (.Int (~~~i' <<< w)))
+      Eval v f arg (.Const (.Int i)) →
+      Eval v f (.Unary (.BitNot (some w)) arg)
+              (.Const (.Int (~~~i <<< w)))
 
   | unary_bitnot_other :
       ∀ (v : var_env) (f : func_env) (w : Option Nat) (arg arg_res : Exp),

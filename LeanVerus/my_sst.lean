@@ -190,6 +190,9 @@ def Typ.hasListDec (ts₁ ts₂ : List Typ) : Decidable (ts₁ = ts₂) :=
     | isFalse _ => isFalse (by simp; intros; contradiction)
 end
 
+instance : DecidableEq Typ := Typ.hasDecEq
+
+
 mutual
 def Typ.syntactic_eq (t t': Typ) : Option Bool :=
   match t, t' with
@@ -330,24 +333,8 @@ inductive UnaryOpr where
   -/
   | Unbox (t : Typ)
   | HasType (t : Typ)
-deriving Repr, Inhabited, Hashable
+deriving Repr, Inhabited, Hashable, DecidableEq
 
-def UnaryOpr.hasDecEq (op₁ op₂ : UnaryOpr) : Decidable (op₁ = op₂) := by
-  cases op₁ <;> cases op₂ <;>
-  try { apply isFalse ; intro h ; injection h }
-  case Proj.Proj f₁ f₂ =>
-    exact match decEq f₁ f₂ with
-    | isTrue h => isTrue (by rw [h])
-    | isFalse _ => isFalse (by intro h; injection h; contradiction)
-  case Box.Box t₁ t₂ | Unbox.Unbox t₁ t₂ | HasType.HasType t₁ t₂ =>
-    exact match Typ.hasDecEq t₁ t₂ with
-    | isTrue h => isTrue (by rw [h])
-    | isFalse _ => isFalse (by intro h; injection h; contradiction)
-  case IsVariant.IsVariant dt₁ var₁ dt₂ var₂ =>
-    exact match decEq dt₁ dt₂, decEq var₁ var₂ with
-    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
-    | isFalse h₁, _ | _, isFalse h₁  =>
-      isFalse (by intro h₂; simp [h₁] at h₂)
 
 /--
   Primitive binary operations.
@@ -454,7 +441,7 @@ def Exp.hasDecEq (e₁ e₂ : Exp) : Decidable (e₁ = e₂) := by
     | isFalse h₁, _ | _, isFalse h₁  =>
       isFalse (by intro h₂; simp [h₁] at h₂)
   case Unaryr.Unaryr op₁ arg₁ op₂ arg₂ =>
-    exact match UnaryOpr.hasDecEq op₁ op₂, Exp.hasDecEq arg₁ arg₂ with
+    exact match decEq op₁ op₂, Exp.hasDecEq arg₁ arg₂ with
     | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
     | isFalse h₁, _ | _, isFalse h₁  =>
       isFalse (by intro h₂; simp [h₁] at h₂)
@@ -530,6 +517,8 @@ def Exp.hasFieldsDec (fs₁ fs₂ : List (String × Exp)) : Decidable (fs₁ = f
     | isFalse h₁, _,  _ | _, isFalse h₁, _ | _, _,  isFalse h₁ =>
       isFalse (by intro h₃; simp [h₁] at h₃)
 end
+
+instance : DecidableEq Exp := Exp.hasDecEq
 
 mutual
 def Exp.syntactic_eq (e e' : Exp) : Option Bool :=
