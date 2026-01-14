@@ -348,3 +348,9 @@ inductive Eval: var_env → func_env → Exp → Exp → Prop where
     Eval v f arg₁ arg₃ →
     Eval v f arg₂ arg₄ →
     Eval v f (.Binary (.Arith .Add .Allow) arg₁ arg₂) (.Binary (.Arith .Add .Allow) arg₃ arg₄)
+
+  | binaryr_ext_eq :
+    ∀ (v : var_env) (f : func_env) (arg arg_res : Exp),
+    WsTm v.length (.Binaryr (.ExtEq) arg) →
+    Eval v f arg arg_res →
+    Eval v f (.Binaryr (.ExtEq) arg) (.Binaryr (.ExtEq) arg_res)

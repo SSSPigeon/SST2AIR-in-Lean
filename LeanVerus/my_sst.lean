@@ -344,6 +344,18 @@ inductive OverflowBehavior
   | Error (i : IntRange)
 deriving Repr, Inhabited, DecidableEq, Hashable
 
+inductive ArrayKind
+  | Array
+  | Slice
+deriving Repr, Inhabited, DecidableEq, Hashable
+
+inductive BoundsCheck
+  /-- No bounds check necessary. This is the only value allowed in SST. -/
+  | Allow
+  /-- Perform a bounds check. -/
+  | Error
+deriving Repr, Inhabited, DecidableEq, Hashable
+
 /--
   Primitive binary operations.
 
@@ -372,8 +384,10 @@ inductive BinaryOp
   | Arith (op : ArithOp) (ob : OverflowBehavior)
   /-- Bitwise operations. Overflow checking is done when `mode = Exec`. -/
   | Bitwise (op : BitwiseOp) (mode : Mode)
-  /-- rsg: Used only for handling verus_builtin::array_index -/
-  | ArrayIndex
+  /-- Index into an array or slice, no bounds-checking.
+    `verus_builtin::array_index` lowers to this.
+    In SST, this can also be used as a Loc. -/
+  | Index (ak : ArrayKind) (bc : BoundsCheck)
 deriving Repr, Inhabited, DecidableEq, Hashable
 
 inductive Quant where
@@ -423,6 +437,7 @@ inductive Exp where
   | Unaryr (op : UnaryOpr) (arg : Exp)
   /-- Primitive binary function application. -/
   | Binary (op : BinaryOp) (arg₁ arg₂ : Exp)
+  -- | Binaryr (op : BinaryOpr) (arg₁ arg₂ : Exp)
   | If (cond branch₁ branch₂ : Exp)
   | Let (ty : List Typ) (e : List Exp) (exp : Exp)
   | Quant (q : Quant) (var : Typ) (exp : Exp)
