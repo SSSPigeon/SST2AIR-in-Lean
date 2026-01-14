@@ -335,6 +335,14 @@ inductive UnaryOpr where
   | HasType (t : Typ)
 deriving Repr, Inhabited, Hashable, DecidableEq
 
+inductive OverflowBehavior
+  /-- Return an int. This is the only value allowed in SST. -/
+  | Allow
+  /-- Truncate to the given range  -/
+  | Truncate (i : IntRange)
+  /-- Error if the result is outside the given range -/
+  | Error (i : IntRange)
+deriving Repr, Inhabited, DecidableEq, Hashable
 
 /--
   Primitive binary operations.
@@ -361,7 +369,7 @@ inductive BinaryOp
   /-- Arithmetic inequality -/
   | Inequality (op : InequalityOp)
   /-- Arithmetic operations. Overflow checking is done when `mode = Exec`. -/
-  | Arith (op : ArithOp) (mode : Mode)
+  | Arith (op : ArithOp) (ob : OverflowBehavior)
   /-- Bitwise operations. Overflow checking is done when `mode = Exec`. -/
   | Bitwise (op : BitwiseOp) (mode : Mode)
   /-- rsg: Used only for handling verus_builtin::array_index -/
