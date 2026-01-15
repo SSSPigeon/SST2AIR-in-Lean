@@ -11,6 +11,9 @@ def snoc.{u} {X : Sort u} (σ : Nat → X) (x : X) : Nat → X
   | 0   => x
   | n+1 => σ n
 
+def multi_snoc {X} (σ : Nat → X) (xs : List X) : Nat → X :=
+  List.foldl snoc σ xs
+
 @[simp]
 theorem snoc_zero {X} (σ : Nat → X) (x : X) : snoc σ x 0 = x := rfl
 

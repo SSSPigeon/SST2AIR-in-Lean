@@ -397,7 +397,7 @@ deriving Repr, Inhabited, DecidableEq, Hashable
 
 inductive CallFun where
   | Fun (fn : Ident) -- an optional resolved Fun for methods currently not implemented
-  | Recursive (name : Ident)
+  | Recursive (fn : Ident)
   -- | InternalFun (name : Ident)
 deriving Repr, Inhabited, DecidableEq, Hashable
 
@@ -439,8 +439,8 @@ inductive Exp where
   | Binary (op : BinaryOp) (arg₁ arg₂ : Exp)
   -- | Binaryr (op : BinaryOpr) (arg₁ arg₂ : Exp)
   | If (cond branch₁ branch₂ : Exp)
-  | Let (ty : List Typ) (e : List Exp) (exp : Exp)
-  | Quant (q : Quant) (var : Typ) (exp : Exp)
+  | Let (tys : List Typ) (es : List Exp) (body : Exp)
+  | Quant (q : Quant) (var : Typ) (body : Exp)
   | Lambda (var : Typ) (exp : Exp)
   --TODO: figure out what this means
   | ArrayLiteral (elems : List Exp)
