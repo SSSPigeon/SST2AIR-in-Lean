@@ -11,6 +11,11 @@ abbrev typ_env := Typ → Typ --String → Typ
 
 abbrev func_env := Typ → Exp
 
+abbrev I128_MAX : Int := 2^127 - 1
+abbrev I128_MIN : Int := -2^127
+
+def u128_to_width (i : Int) : Int :=
+  BitVec.ofInt 128 i |> BitVec.toNat
 
 
 inductive Eval: var_env → func_env → Exp → Exp → Prop where
@@ -44,20 +49,35 @@ inductive Eval: var_env → func_env → Exp → Exp → Prop where
     Eval v f arg arg_res → arg_res ≠ .Const (.Bool true) → arg_res ≠ .Const (.Bool false) →
     Eval v f (.Unary .Not arg) (.Unary .Not arg_res)
 
-  /- TODO : bitnot i128 -/
-  | unary_bitnot_nwidth :
+  | unary_bitnot_nwidth_i128 :
     ∀ (v : var_env) (f : func_env) (i : Int) (arg : Exp) ,
     -- WsTm v.length (.Unary (.BitNot none) (.Const (.Int i))) →
-    Eval v f arg (.Const (.Int i)) →
+    Eval v f arg (.Const (.Int i)) → i ≥  I128_MIN ∧ i ≤ I128_MAX →
     Eval v f (.Unary (.BitNot none) arg)
             (.Const (.Int (~~~i)))
 
-  | unary_bitnot_width :
+  | unary_bitnot_nwidth_ni128 :
+    ∀ (v : var_env) (f : func_env) (i : Int) (arg : Exp) ,
+    -- WsTm v.length (.Unary (.BitNot none) (.Const (.Int i))) →
+    Eval v f arg (.Const (.Int i)) → i < I128_MIN ∨ i > I128_MAX →
+    Eval v f (.Unary (.BitNot none) arg)
+            (.Unary (.BitNot none) (.Const (.Int i)))
+
+  | unary_bitnot_width_u128 :
     ∀ (v : var_env) (f : func_env) (w : Nat) (i : Int) (arg : Exp),
     -- WsTm v.length (.Unary (.BitNot (some w)) (.Const (.Int i))) →
     Eval v f arg (.Const (.Int i)) →
+    i ≥ 0 ∧ i ≤ 2^128 - 1 →
     Eval v f (.Unary (.BitNot (some w)) arg)
-            (.Const (.Int (~~~i <<< w)))
+            (.Const (.Int (u128_to_width i)))
+
+  | unary_bitnot_width_nu128 :
+    ∀ (v : var_env) (f : func_env) (w : Nat) (i : Int) (arg : Exp),
+    -- WsTm v.length (.Unary (.BitNot (some w)) (.Const (.Int i))) →
+    Eval v f arg (.Const (.Int i)) →
+    i < 0 ∨ i > 2^128 - 1 →
+    Eval v f (.Unary (.BitNot (some w)) arg)
+                (.Unary (.BitNot (some w)) (.Const (.Int i)))
 
   | unary_bitnot_other :
     ∀ (v : var_env) (f : func_env) (w : Option Nat) (arg arg_res : Exp),
