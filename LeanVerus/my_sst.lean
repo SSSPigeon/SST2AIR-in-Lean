@@ -124,7 +124,7 @@ inductive Typ where
     To refer to the actual declaration/definition of the struct,
     use the datatype map in `Parser.lean`.
   -/
-  | Struct (name : Ident) (params : List Typ)
+  | Struct (name : Ident) (fields : List Typ)
   /--
     Rust enums, corresponding to Lean `inductive` types.
 
