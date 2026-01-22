@@ -2,9 +2,7 @@ import LeanVerus.My_sst
 
 open VerusLean
 
-namespace sst_semantics
-
-
+namespace typ_rep
 
 structure DynStruct (name : Ident) (n : Nat) (Ts : Fin n → Type) where
   fields : (i : Fin n) → Ts i
@@ -31,6 +29,8 @@ def type_rep (t : Typ) (typ_env : String → Typ):  Option Type :=
     | some t' => some (Array t')
     | none => none
   | .TypParam p => type_rep (typ_env p) typ_env
+    -- TODO: put some constraints on typ_env to ensure typ_rep terminates
+    --
   | .SpecFn params ret => sorry
   --TODO: corresponding expressions in my_sst?
   | .Decorated dec t => sorry
@@ -49,6 +49,7 @@ def type_rep (t : Typ) (typ_env : String → Typ):  Option Type :=
   | .AnonymousClosure typs typ => sorry
   | .FnDef fn typs => sorry
   | .AirNamed str => sorry
+
 
 def list_to_finType (ts : List Typ) (typ_env : String → Typ) :
   Option (Nat × (Fin ts.length → Type)) :=
