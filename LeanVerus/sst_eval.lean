@@ -1,4 +1,5 @@
-import LeanVerus.My_sst
+import LeanVerus.Typ
+import LeanVerus.Exp
 import LeanVerus.Typing
 import LeanVerus.Autosubst
 import Mathlib.Data.Int.Bitwise

@@ -1,5 +1,6 @@
 import Mathlib.Tactic.Convert
-import LeanVerus.My_sst
+import LeanVerus.Typ
+import LeanVerus.Exp
 
 /-- Append an element to a substitution or a renaming.
 ```

@@ -1,4 +1,4 @@
-import LeanVerus.My_sst
+import LeanVerus.Exp
 
 open VerusLean Std List
 

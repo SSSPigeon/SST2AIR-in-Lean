@@ -1,4 +1,6 @@
-import LeanVerus.My_sst
+import Init.Prelude
+import Init.Data
+import LeanVerus.Typ
 
 namespace airast
 
