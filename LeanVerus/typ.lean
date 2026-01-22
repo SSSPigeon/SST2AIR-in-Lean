@@ -251,7 +251,11 @@ def typ_subst (env : typ_env) (t : Typ) : ClosedTyp :=
     ⟨ .Array (typ_subst env t').1, by
       simp [Typ.is_closed]; exact (typ_subst env t').2⟩
   | .TypParam t => env t
-  | .SpecFn params ret => sorry
+  | .SpecFn params ret =>
+    let r  := typ_subst env ret
+    let ps := typ_subst_list env params
+    ⟨.SpecFn ps.1 r.1, by
+      simp [Typ.is_closed, r.2, ps.2]⟩
   | .Decorated d t' =>
     ⟨ .Decorated d (typ_subst env t').1, by
       simp [Typ.is_closed]; exact (typ_subst env t').2⟩
@@ -262,24 +266,30 @@ def typ_subst (env : typ_env) (t : Typ) : ClosedTyp :=
     ⟨.Tuple (typ_subst env t₁).1 (typ_subst env t₂).1, by
       simp [Typ.is_closed]; exact ⟨(typ_subst env t₁).2, (typ_subst env t₂).2⟩⟩
   | .Struct s fields =>
-    ⟨ .Struct s (typ_subst_list env fields).unattach, by
-      simp [Typ.is_closed];
-      cases fields
-      . have : (typ_subst_list env []) = [] := by sorry
-        rw [this]
-        rw [List.unattach_nil]
-        simp [Typ.is_closed_list]
-      . sorry
-      ⟩
-  | .Enum _ params => sorry
-  | .AnonymousClosure ts t => sorry
-  | .FnDef fn ts => sorry
+    let fs := typ_subst_list env fields
+    ⟨.Struct s fs.1, by
+      simp [Typ.is_closed, fs.2]⟩
+  | .Enum e params =>
+    let ps := typ_subst_list env params
+    ⟨.Struct e ps.1, by
+      simp [Typ.is_closed, ps.2]⟩
+  | .AnonymousClosure ts t =>
+    let r  := typ_subst env t
+    let ps := typ_subst_list env ts
+    ⟨.AnonymousClosure ps.1 r.1, by
+      simp [Typ.is_closed, r.2, ps.2]⟩
+  | .FnDef fn ts =>
+    let ps := typ_subst_list env ts
+    ⟨.FnDef fn ps.1, by
+      simp [Typ.is_closed, ps.2]⟩
   | .AirNamed a => ⟨ .AirNamed a , by rfl ⟩
-termination_by t
 
-def typ_subst_list (env : typ_env) (ts : List Typ) : List ClosedTyp :=
+def typ_subst_list (env : typ_env) (ts : List Typ) : { us : List Typ // Typ.is_closed_list us } :=
   match ts with
-  | [] => []
-  | t :: ts' => typ_subst env t :: typ_subst_list env ts'
-termination_by ts
+  | [] => ⟨[], by rfl⟩
+  | t :: ts' =>
+    let u  := typ_subst env t
+    let us := typ_subst_list env ts'
+    ⟨u.1 :: us.1, by
+      simp [Typ.is_closed_list, u.2, us.2]⟩
 end
