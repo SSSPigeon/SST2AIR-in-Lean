@@ -238,3 +238,48 @@ def Typ.syntactic_eq_list (ts₁ ts₂ : List Typ) : Option Bool :=
     | some false => some false
     | none => none
 end
+
+def typ_env := String → ClosedTyp
+
+mutual
+def typ_subst (env : typ_env) (t : Typ) : ClosedTyp :=
+  match t with
+  | ._Bool => ⟨ ._Bool, by rfl ⟩
+  | .Int i => ⟨ .Int i, by rfl ⟩
+  | .Float w => ⟨ .Float w, by rfl ⟩
+  | .Array t' =>
+    ⟨ .Array (typ_subst env t').1, by
+      simp [Typ.is_closed]; exact (typ_subst env t').2⟩
+  | .TypParam t => env t
+  | .SpecFn params ret => sorry
+  | .Decorated d t' =>
+    ⟨ .Decorated d (typ_subst env t').1, by
+      simp [Typ.is_closed]; exact (typ_subst env t').2⟩
+  | .Primitive p t' =>
+    ⟨ .Primitive p (typ_subst env t').1, by
+      simp [Typ.is_closed]; exact (typ_subst env t').2⟩
+  | .Tuple t₁ t₂ =>
+    ⟨.Tuple (typ_subst env t₁).1 (typ_subst env t₂).1, by
+      simp [Typ.is_closed]; exact ⟨(typ_subst env t₁).2, (typ_subst env t₂).2⟩⟩
+  | .Struct s fields =>
+    ⟨ .Struct s (typ_subst_list env fields).unattach, by
+      simp [Typ.is_closed];
+      cases fields
+      . have : (typ_subst_list env []) = [] := by sorry
+        rw [this]
+        rw [List.unattach_nil]
+        simp [Typ.is_closed_list]
+      . sorry
+      ⟩
+  | .Enum _ params => sorry
+  | .AnonymousClosure ts t => sorry
+  | .FnDef fn ts => sorry
+  | .AirNamed a => ⟨ .AirNamed a , by rfl ⟩
+termination_by t
+
+def typ_subst_list (env : typ_env) (ts : List Typ) : List ClosedTyp :=
+  match ts with
+  | [] => []
+  | t :: ts' => typ_subst env t :: typ_subst_list env ts'
+termination_by ts
+end
