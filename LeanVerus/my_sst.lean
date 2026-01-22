@@ -150,40 +150,24 @@ def Typ.is_closed (t : Typ): Bool :=
   | .Int _ => true
   | .Float _ => true
   | .Array t' => is_closed t'
-  | .TypParam i => false
+  | .TypParam _ => false
   | .SpecFn params ret => is_closed ret && is_closed_list params
-    -- params.all (fun t =>
-    --   -- have : sizeOf t < 1 + sizeOf params := by sorry
-    -- is_closed t)
   | .Decorated _ t' => is_closed t'
   | .Primitive _ t' => is_closed t'
   | .Tuple t₁ t₂ => is_closed t₁ && is_closed t₂
   | .Struct _ fields => is_closed_list fields
-    -- fields.all (fun t =>
-    --   have : sizeOf t < 1 + sizeOf fields := by sorry
-    -- is_closed t)
   | .Enum _ params => is_closed_list params
-    -- params.all (fun t =>
-    --   have : sizeOf t < 1 + sizeOf params := by sorry
-    -- is_closed t)
   | .AnonymousClosure ts t => is_closed t && is_closed_list ts
-    -- ts.all (fun t =>
-    --   have : sizeOf t < 1 + sizeOf ts := by sorry
-    -- is_closed t)
   | .FnDef _ ts => is_closed_list ts
-    -- ts.all (fun t =>
-    --   have : sizeOf t < 1 + sizeOf ts := by sorry
-    -- is_closed t)
   | .AirNamed _ => true
--- termination_by sizeOf t
--- decreasing_by
---   all_goals try simp
 
 def Typ.is_closed_list (ts : List Typ) : Bool :=
   match ts with
   | [] => true
   | t :: ts' => is_closed t && is_closed_list ts'
 end
+
+def ClosedTyp := { t : Typ // Typ.is_closed t }
 
 mutual
 def Typ.hasDecEq (t t' : Typ) : Decidable (t = t') := by
