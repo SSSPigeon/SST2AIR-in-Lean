@@ -6,7 +6,7 @@ open VerusLean
 
 def arg_list (domain: ClosedTyp → Type) := hlist domain
 
-
+section preinterpretation
 -- TODO: Consider choosing Option Type as the output type
 def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   match t with
@@ -51,4 +51,12 @@ def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   | ⟨.FnDef fn typs, h⟩ => sorry
   | ⟨.AirNamed str, h⟩ => sorry
 termination_by t.val
--- structure pi_dom (dom_aux : ClosedTyp → Type) (t: ClosedTyp) where
+
+inductive domain_nonempty (domain : ClosedTyp -> Type) (s : ClosedTyp) : Type where
+  | DE : forall (_ : domain s), domain_nonempty domain s
+
+structure pi_dom (t: ClosedTyp) where
+  dom_aux : ClosedTyp → Type
+  domain_ne: forall s, domain_nonempty (domain dom_aux) s
+
+end preinterpretation
