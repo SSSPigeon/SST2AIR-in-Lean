@@ -13,3 +13,7 @@ def T_to_Type : T → Type
   | T.B => Bool
 
 def ex : hlist T_to_Type [T.A] := hlist.HL_cons T.A [] (42 : Int) hlist.HL_nil
+
+
+def hlist_hd {A: Type} {f: A → Type} {hd : A} {tl : List A}
+  (h : hlist f (hd :: tl)) := f hd

@@ -1,6 +1,54 @@
 import LeanVerus.Hlist
 import LeanVerus.Typ
+import Mathlib.Logic.IsEmpty
 
 open VerusLean
 
 def arg_list (domain: ClosedTyp → Type) := hlist domain
+
+
+-- TODO: Consider choosing Option Type as the output type
+def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
+  match t with
+  | ⟨._Bool, _⟩ => Bool
+  | ⟨.Int i, _⟩ =>
+    match i with
+    | IntRange.Int => Int
+    | IntRange.Nat => Nat
+    | IntRange.U u => sorry
+    | IntRange.I i => sorry
+    | IntRange.USize => sorry
+    | IntRange.ISize => sorry
+    | IntRange.Char => Char
+  | ⟨.Float w, _⟩ =>
+    if w = 32 then Float32
+    else if w = 64 then Float
+    else Empty
+  | ⟨.TypParam p, h⟩ =>
+    False.elim <|
+    show False from by
+      have h₁ : Typ.is_closed (Typ.TypParam p) = false := rfl
+      exact Bool.noConfusion (h₁.symm.trans h)
+  | ⟨.Array t', h⟩ =>
+    have h' : Typ.is_closed t' := by
+      simp[Typ.is_closed] at h
+      exact h
+    List (domain dom_aux ⟨ t', h ⟩)
+  | ⟨.SpecFn params ret, h⟩ => sorry
+  | ⟨.Decorated dec t, h⟩ => sorry
+  | ⟨.Primitive prm t, h⟩ => sorry
+  | ⟨.Tuple t₁ t₂, h⟩ => sorry
+    -- match type_rep t₁ typ_env, type_rep t₂ typ_env with
+    -- | some t₁', some t₂' => some (t₁' × t₂')
+    -- | _, _ => none
+  | ⟨.Struct name fields, h⟩ => sorry
+    -- match list_to_finType fields typ_env with
+    -- | none => none
+    -- | some (n, Ts) =>
+    --   some (DynStruct name fields.length Ts)
+  | ⟨.Enum name params, h⟩ => sorry
+  | ⟨.AnonymousClosure typs typ, h⟩ => sorry
+  | ⟨.FnDef fn typs, h⟩ => sorry
+  | ⟨.AirNamed str, h⟩ => sorry
+termination_by t.val
+-- structure pi_dom (dom_aux : ClosedTyp → Type) (t: ClosedTyp) where

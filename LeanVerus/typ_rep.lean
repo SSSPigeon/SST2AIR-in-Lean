@@ -30,9 +30,7 @@ def type_rep (t : Typ) (typ_env : String → Typ):  Option Type :=
     | none => none
   | .TypParam p => type_rep (typ_env p) typ_env
     -- TODO: put some constraints on typ_env to ensure typ_rep terminates
-    --
   | .SpecFn params ret => sorry
-  --TODO: corresponding expressions in my_sst?
   | .Decorated dec t => sorry
   --TODO: check this in verus.src, and see if I need this
   | .Primitive prm t => sorry
