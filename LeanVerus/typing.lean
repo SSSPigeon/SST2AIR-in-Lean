@@ -1,110 +1,66 @@
+import LeanVerus.Typ
 import LeanVerus.Exp
+import LeanVerus.Domain
 
-open VerusLean Std List
+namespace typing
+open VerusLean
 
-inductive WsTm : Nat → Exp → Prop
-  | const : ∀ n c,
-    WsTm n (.Const c)
+def context := List Typ
 
-  | var : ∀ n i,
-    i < n →
-    WsTm n (.Var i)
+declare_syntax_cat judgment
+scoped syntax:50 term:51 : judgment
+scoped syntax:50 term:51 " : " term:51 : judgment
 
-  | call : ∀ n fn typs exps,
-    (∀ e ∈ exps, WsTm n e) →
-    WsTm n (.Call fn typs exps)
+local syntax:25 term:51 " ⊢" judgment:50 : term
 
-  | callLambda : ∀ n lam args,
-    WsTm n lam →
-    (∀ e ∈ args, WsTm n e) →
-    WsTm n (.CallLambda lam args)
+set_option hygiene false in
+macro_rules
+  | `($Γ ⊢ $A:term) => `(WfTp $Γ $A)
+  | `($Γ ⊢ $t:term : $A:term) => `(WfTm $Γ $A $t)
 
-  | structctor : ∀ n dt fields,
-    (∀ p ∈ fields, WsTm n p.2) →
-    WsTm n (.StructCtor dt fields)
+mutual
+/-- All types in the given context are well-formed. -/
+inductive WfCtx : context → Prop
+  | nil : WfCtx []
+  | snoc {Γ A} :
+    WfCtx Γ →
+    Γ ⊢ A →
+    WfCtx (A :: Γ)
 
-  | tuplector : ∀ n size data,
-    (∀ e ∈ data, WsTm n e) →
-    WsTm n (.TupleCtor size data)
+/-- From Why3-Coq: no types with type variables can ever be valid. -/
+inductive WfTp : context → Typ → Prop
+  | bool { Γ } :
+    Γ ⊢ ._Bool
 
-  | unary : ∀ n op arg,
-    WsTm n arg →
-    WsTm n (.Unary op arg)
+  | int { Γ i } :
+    Γ ⊢ .Int i
 
-  | unaryr : ∀ n op arg,
-    WsTm n arg →
-    WsTm n (.Unaryr op arg)
+  | float { Γ i } :
+    Γ ⊢ .Float i
 
-  | binary : ∀ n op arg₁ arg₂,
-    WsTm n arg₁ →
-    WsTm n arg₂ →
-    WsTm n (.Binary op arg₁ arg₂)
+  | array { Γ t } :
+    Γ ⊢ t → Γ ⊢ .Array t
 
-  | _if : ∀ n cond b₁ b₂,
-    WsTm n cond →
-    WsTm n b₁ →
-    WsTm n b₂ →
-    WsTm n (.If cond b₁ b₂)
+  | decorated { Γ d t } :
+    Γ ⊢ t → Γ ⊢ .Decorated d t
 
-  | _let : ∀ n tys es exp,
-    (∀ e ∈ es, WsTm n e) →
-    WsTm (n + List.length es) exp →
-    WsTm n (.Let tys es exp)
+  | primitive { Γ p t } :
+    Γ ⊢ t → Γ ⊢ .Primitive p t
 
-  | quant : ∀ n q var exp,
-    WsTm (n + 1) exp →
-    WsTm n (.Quant q var exp)
+  | tuple { Γ t₁ t₂ } :
+    Γ ⊢ t₁ → Γ ⊢ t₂ → Γ ⊢ .Tuple t₁ t₂
 
-  | lambda : ∀ n var exp,
-    WsTm (n + 1) exp →
-    WsTm n (.Lambda var exp)
+  | struct { Γ n l } :
+    ∀ t ∈ l, Γ ⊢ t → Γ ⊢ .Struct n l
 
-  | arrayLiteral : ∀ n elems,
-    (∀ e ∈ elems, WsTm n e) →
-    WsTm n (.ArrayLiteral elems)
+  | anonymous_closure { Γ l t' } :
+    ∀ t ∈ l, Γ ⊢ t → Γ ⊢ t' → Γ ⊢ .AnonymousClosure l t'
 
-namespace Inversion
+  | fn_def { Γ n l } :
+    ∀ t ∈ l, Γ ⊢ t → Γ ⊢ .FnDef n l
 
-attribute [local grind] WsTm
+  | air_named { Γ s } :
+    Γ ⊢ .AirNamed s
+end
 
-theorem ws_increase (n m : Nat) (e : Exp) : WsTm n e → WsTm (n + m) e := by
-  induction e generalizing n
-  all_goals try grind
-  . intro h
-    cases h
-    next foo =>
-      expose_names
-      constructor
-      . intro e hmem
-        apply h
-        exact hmem
-        apply foo
-        exact hmem
-
-theorem inv_var : ∀ n i,  WsTm n (.Var i) → i < n := by grind
-theorem inv_call : ∀ n fn typs exps, WsTm n (.Call fn typs exps) →
-  (∀ e ∈ exps, WsTm n e) := by grind
-theorem inv_callLambda : ∀ n lam args, WsTm n (.CallLambda lam args) →
-  WsTm n lam ∧ (∀ e ∈ args, WsTm n e) := by grind
-theorem inv_structctor : ∀ n dt fields, WsTm n (.StructCtor dt fields) →
-  (∀ p ∈ fields, WsTm n p.2) := by grind
-theorem inv_tuplector : ∀ n size data, WsTm n (.TupleCtor size data) →
-  (∀ e ∈ data, WsTm n e) := by grind
-theorem inv_unary : ∀ n op arg, WsTm n (.Unary op arg) →
-  WsTm n arg := by grind
-theorem inv_unaryr : ∀ n op arg, WsTm n (.Unaryr op arg) →
-  WsTm n arg := by grind
-theorem inv_binary : ∀ n op arg₁ arg₂, WsTm n (.Binary op arg₁ arg₂) →
-  WsTm n arg₁ ∧ WsTm n arg₂ := by grind
-theorem inv_if : ∀ n cond b₁ b₂, WsTm n (.If cond b₁ b₂) →
-  WsTm n cond ∧ WsTm n b₁ ∧ WsTm n b₂ := by grind
-theorem inv_let : ∀ n tys es exp, WsTm n (.Let tys es exp) →
-  (∀ e ∈ es, WsTm n e) ∧ WsTm (n + List.length es) exp := by grind
-theorem inv_quant : ∀ n q var exp, WsTm n (.Quant q var exp) →
-  WsTm (n + 1) exp := by grind
-theorem inv_lambda : ∀ n var exp, WsTm n (.Lambda var exp) →
-  WsTm (n + 1) exp := by grind
-theorem inv_arrayLiteral : ∀ n elems, WsTm n (.ArrayLiteral elems) →
-  (∀ e ∈ elems, WsTm n e) := by grind
-
-end Inversion
+-- inductive WfTm : context → Exp → Typ → Prop
