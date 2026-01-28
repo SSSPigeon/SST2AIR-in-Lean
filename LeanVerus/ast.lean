@@ -18,7 +18,7 @@ deriving Repr, Inhabited, DecidableEq, Hashable
 
 inductive Constant
   | Bool (b: Bool)
-  | Nat (i: Nat) -- In verus, i has type string
+  | Nat (i: String) -- In verus, i has type string
   | BitVec (s: List Nat) (width: UInt32) -- In verus, s is string
 deriving Repr, Inhabited, DecidableEq, Hashable
 

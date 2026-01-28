@@ -6,7 +6,7 @@ namespace VerusLean
 open Lean (Json ToJson FromJson)
 
 /-- Constant value literals -/
-inductive Const
+inductive dConst
   /-- Booleans. Uses Rust's built-in `bool` type. -/
   | Bool (b : Bool)
   /-- Integers of arbitrary size. Rust encodes these as a sign bit plus a vector of `u64`s. -/
