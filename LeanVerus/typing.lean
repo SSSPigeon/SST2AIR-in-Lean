@@ -1,6 +1,5 @@
 import LeanVerus.Typ
 import LeanVerus.Exp
-import LeanVerus.Domain
 import LeanVerus.Autosubst
 
 namespace typing
@@ -49,7 +48,7 @@ inductive WfTp : context → Typ → Prop
     ∀ Γ p t, Γ ⊢ t → Γ ⊢ .Primitive p t
 
   | tuple :
-    ∀ Γ t₁ t₂, Γ ⊢ t₁ → Γ ⊢ t₂ → Γ ⊢ .Tuple t₁ t₂
+    ∀ Γ l, ∀ t ∈ l, Γ ⊢ t → Γ ⊢ .Tuple l
 
   | struct :
     ∀ Γ n l, ∀ t ∈ l, Γ ⊢ t → Γ ⊢ .Struct n l
@@ -89,26 +88,62 @@ inductive WfTm : context → Typ → Exp → Prop
   | T_float64 :
     ∀ Γ f, Γ ⊢ Exp.Const (.Float64 f) : (.Float 64)
 
+  | T_tuple :
+    ∀ Γ s (l_ty : List Typ) l_exp, (_ : l_ty.length = l_exp.length) →
+    ∀ i, (_ : i ≥ 0 ∧ i < l_ty.length) → Γ ⊢ l_exp[i] : l_ty[i] →
+    Γ ⊢ .TupleCtor s l_exp : (.Tuple l_ty)
+
+  | T_array :
+    ∀ Γ l A, ∀ e ∈ l, Γ ⊢ e : A → Γ ⊢ .ArrayLiteral l : .Array A
+
+  | T_if :
+    ∀ Γ c b₁ b₂ A, Γ ⊢ c : Typ._Bool → Γ ⊢ b₁ : A → Γ ⊢ b₂ : A →
+    Γ ⊢ .If c b₁ b₂ : A
+
+  | T_and :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : Typ._Bool → Γ ⊢ b₂ : Typ._Bool →
+    Γ ⊢ .Binary .And b₁ b₂ : Typ._Bool
+
+  | T_or :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : Typ._Bool → Γ ⊢ b₂ : Typ._Bool →
+    Γ ⊢ .Binary .Or b₁ b₂ : Typ._Bool
+
+  | T_xor :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : Typ._Bool → Γ ⊢ b₂ : Typ._Bool →
+    Γ ⊢ .Binary .Xor b₁ b₂ : Typ._Bool
+
+  | T_implies :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : Typ._Bool → Γ ⊢ b₂ : Typ._Bool →
+    Γ ⊢ .Binary .Implies b₁ b₂ : Typ._Bool
+
+  | T_eq :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : Typ._Bool → Γ ⊢ b₂ : Typ._Bool →
+    Γ ⊢ .Binary (.Eq _) b₁ b₂ : Typ._Bool
+
+  | T_ineq :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : A → Γ ⊢ b₂ : A →
+    Γ ⊢ .Binary (.Inequality _) b₁ b₂ : Typ._Bool
+
+  /-- TODO: Add more possibilities, e.g., Γ ⊢ b₁ : Float -/
+  | T_arith :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .Int → Γ ⊢ b₂ : .Int .Int →
+    Γ ⊢ .Binary (.Arith _ _) b₁ b₂ : .Int .Int
+
+  | T_bitwise :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .Int → Γ ⊢ b₂ : .Int .Int →
+    Γ ⊢ .Binary (.Bitwise _ _) b₁ b₂ : .Int .Int
+
+  /--TODO: Can i be of other types, like usize? -/
+  | T_index :
+    ∀ Γ a i A, Γ ⊢ a : .Array A → Γ ⊢ i : .Int .Int →
+    Γ ⊢ .Binary (.Index _ _) a i : A
+
   -- | Var (x : Nat)
-  -- /-- Call to spec function -/
   -- | Call (fn : CallFun) (typs : List Typ) (exps : List Exp)
   -- | CallLambda (lam : Exp) (args : List Exp)
-  -- /-- A struct constructor -/
   -- | StructCtor (dt : Ident) (fields : List (String × Exp))
-  -- /-- A constructor for the datatype with the name `dt` and the given `fields`. -/
-  -- -- TODO: fix the fields of EnumCtor
-  -- --| EnumCtor (dt : Ident) (variant : String) (data : List (String × Exp))
-  -- /- TODO -/
-  -- | TupleCtor (size : Nat) (data : List Exp)
-  -- /-- Primitive unary function application. -/
   -- | Unary (op : UnaryOp) (arg : Exp)
   -- | Unaryr (op : UnaryOpr) (arg : Exp)
-  -- /-- Primitive binary function application. -/
-  -- | Binary (op : BinaryOp) (arg₁ arg₂ : Exp)
-  -- -- | Binaryr (op : BinaryOpr) (arg₁ arg₂ : Exp)
-  -- | If (cond branch₁ branch₂ : Exp)
   -- | Let (tys : List Typ) (es : List Exp) (body : Exp)
   -- | Quant (q : Quant) (var : Typ) (body : Exp)
   -- | Lambda (var : Typ) (exp : Exp)
-  -- --TODO: figure out what this means
-  -- | ArrayLiteral (elems : List Exp)
