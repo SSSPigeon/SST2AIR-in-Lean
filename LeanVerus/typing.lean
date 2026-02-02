@@ -150,13 +150,16 @@ inductive WfTm : context → Typ → Exp → Prop
   | T_quant :
     ∀ Γ A e B, A :: Γ ⊢ e : B → Γ ⊢ .Quant _ A e : Typ._Bool
 
-  -- | T_call :
-  --   ∀ Γ fn (l_ty : List Typ) l_exp, (_ : l_ty.length = l_exp.length) →
-  --   ∀ i, (_ : i ≥ 0 ∧ i < l_ty.length) → Γ ⊢ l_exp[i] : l_ty[i] →
+  | T_call :
+    ∀ Γ fn (l_ty : List Typ) l_exp ty, (_ : l_ty.length = l_exp.length) →
+    ∀ i, (_ : i ≥ 0 ∧ i < l_ty.length) → Γ ⊢ l_exp[i] : l_ty[i] →
+    Γ ⊢ .Call fn l_ty l_exp ty : ty
+
+  -- | T_callLambda :
+  --   ∀ Γ lam l_exp,
 
 
   -- | Var (x : Nat)
-  -- | Call (fn : CallFun) (typs : List Typ) (exps : List Exp)
   -- | CallLambda (lam : Exp) (args : List Exp)
   -- | StructCtor (dt : Ident) (fields : List (String × Exp))
   -- | Unary (op : UnaryOp) (arg : Exp)
