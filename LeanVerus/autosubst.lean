@@ -46,7 +46,7 @@ namespace VerusLean.Exp
 def rename_exp (ξ : Nat → Nat) : Exp → Exp
   | .Const c => .Const c
   | .Var x => .Var (ξ x)
-  | .Call fn type exps => .Call fn type (exps.map (rename_exp ξ))
+  | .Call fn type exps ty=> .Call fn type (exps.map (rename_exp ξ)) ty
   | .CallLambda lam args =>
     .CallLambda (rename_exp ξ lam) (args.map (rename_exp ξ))
   | .StructCtor dt fields =>
@@ -100,7 +100,7 @@ theorem up_var (n: Nat): up Exp.Var n = Exp.Var:= by
 def subst_exp (σ : Nat → Exp) : Exp → Exp
   | .Const c => .Const c
   | .Var x => σ x
-  | .Call fn type exps => .Call fn type (exps.map (subst_exp σ))
+  | .Call fn type exps ty=> .Call fn type (exps.map (subst_exp σ)) ty
   | .CallLambda body args =>
     .CallLambda (subst_exp σ body) (args.map (subst_exp σ))
   | .StructCtor dt fields =>
@@ -403,7 +403,7 @@ def isClosed (k : Nat := 0) (e: Exp): Bool:=
   match e with
   | Const _ => true
   | Var i => i < k
-  | Call fn _ exps =>
+  | Call fn _ exps ty =>
     exps.attach.all (fun e =>
       have : sizeOf e.val < sizeOf exps := by
          have := List.sizeOf_lt_of_mem e.property

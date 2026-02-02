@@ -398,7 +398,7 @@ nested or mutual induction types.
 theorem Exp.induct {P : Exp → Prop}
   (_exp : ∀c, P (.Const c))
   (_var : ∀x, P (.Var x))
-  (_call : ∀fn typs exps, (∀ e ∈ exps, P e) → P (.Call fn typs exps ty))
+  (_call : ∀fn typs exps ty, (∀ e ∈ exps, P e) → P (.Call fn typs exps ty))
   (_calllambda : ∀body args, (∀ e ∈ args, P e) → (P body) → P (.CallLambda body args))
   (_structctor : ∀dt fields, (∀ p ∈ fields, P p.2) → P (.StructCtor dt fields))
   (_tuplector : ∀size data, (∀ _e ∈ data, P _e) → P (.TupleCtor size data))
