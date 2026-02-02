@@ -60,7 +60,7 @@ inductive UnaryOp where
   /-- Boolean not -/
   | Not
   /-- Bitwise not -/
-  | BitNot (width? : Option Nat)
+  | BitNot (width : Option Nat)
   /-- Force integer value into range given by IntRange (e.g. by using mod). -/
   | Clip (range : IntRange) (truncate : Bool)   --y
   /-
@@ -69,19 +69,6 @@ inductive UnaryOp where
   InferSpecForLoopIter { print_hint: Bool }, // loops?
   CastToInteger, // coercion after casting to an integer (type argument?)
   -/
-  /--
-    Quantifier trigger annotations, used to guide SMT solvers.
-
-    Note: These are largely ignored by Lean. We keep them, though, for two
-    reasons. First, they simplify parsing, so we don't need to special-case
-    on whether we encounter a trigger or not. Second, if Lean ever *does*
-    use SMT solvers to discharge the goals, the trigger information is
-    useful to have around.
-
-    But for the most part, when creating Lean code from serialized objects,
-    we drop trigger information.
-  -/
-  | Trigger
   /-- Return raw bits of a float as an int -/
   | FloatToBits
 deriving Repr, Inhabited, Hashable, DecidableEq
@@ -199,7 +186,7 @@ inductive Exp where
   | Var (x : Nat)
   /-- Call to spec function -/
   | Call (fn : CallFun) (typs : List Typ) (exps : List Exp) (ret : Typ)
-  | CallLambda (lam : Exp) (args : List Exp)
+  | CallLambda (lam : Exp) (arg : Exp)
   /-- A struct constructor -/
   | StructCtor (dt : Ident) (fields : List (String × Exp))
   /-- A constructor for the datatype with the name `dt` and the given `fields`. -/
@@ -277,8 +264,8 @@ def Exp.hasDecEq (e₁ e₂ : Exp) : Decidable (e₁ = e₂) := by
     | isTrue h₁, isTrue h₂, isTrue h₃, isTrue h₄ => isTrue (by rw [h₁, h₂, h₃, h₄])
     | isFalse h₁, _,  _, _ | _, isFalse h₁, _, _ | _, _, isFalse h₁, _ | _, _, _, isFalse h₁ =>
       isFalse (by intro h₄; simp [h₁] at h₄)
-  case CallLambda.CallLambda lam₁ args₁ lam₂ args₂ =>
-    exact match Exp.hasDecEq lam₁ lam₂, Exp.hasListDec args₁ args₂ with
+  case CallLambda.CallLambda lam₁ arg₁ lam₂ arg₂ =>
+    exact match Exp.hasDecEq lam₁ lam₂, Exp.hasDecEq arg₁ arg₂ with
     | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
     | isFalse h₁, _ | _, isFalse h₁  =>
       isFalse (by intro h₂; simp [h₁] at h₂)
@@ -363,10 +350,10 @@ def Exp.syntactic_eq (e e' : Exp) : Option Bool :=
     match c_eq, b₁_eq, b₂_eq with
     | some b₁, some b₂, some b₃ => def_eq (b₁ && b₂ && b₃)
     | _, _, _ => none
-  | CallLambda lam₁ args₁, CallLambda lam₂ args₂ =>
+  | CallLambda lam₁ arg₁, CallLambda lam₂ arg₂ =>
     let lam_eq := Exp.syntactic_eq lam₁ lam₂
-    let args_eq := Exp.syntactic_eq_list args₁ args₂
-    match lam_eq, args_eq with
+    let arg_eq := Exp.syntactic_eq arg₁ arg₂
+    match lam_eq, arg_eq with
     | some b₁, some b₂ => def_eq (b₁ && b₂)
     | _, _ => none
   | Call fn₁ _ exps₁ _, Call fn₂ _ exps₂ _=>
@@ -399,7 +386,7 @@ theorem Exp.induct {P : Exp → Prop}
   (_exp : ∀c, P (.Const c))
   (_var : ∀x, P (.Var x))
   (_call : ∀fn typs exps ty, (∀ e ∈ exps, P e) → P (.Call fn typs exps ty))
-  (_calllambda : ∀body args, (∀ e ∈ args, P e) → (P body) → P (.CallLambda body args))
+  (_calllambda : ∀body arg, P arg → (P body) → P (.CallLambda body arg))
   (_structctor : ∀dt fields, (∀ p ∈ fields, P p.2) → P (.StructCtor dt fields))
   (_tuplector : ∀size data, (∀ _e ∈ data, P _e) → P (.TupleCtor size data))
   (_unary : ∀op arg, P arg → P (.Unary op arg))

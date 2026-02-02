@@ -66,7 +66,7 @@ end
 
 /--
 From HoTTLean:
-`Lookup Γ i A l` means that `A = A'[↑ⁱ⁺¹]` where `Γ[i] = (A', l)`.
+`Lookup Γ i A` means that `A = A'[↑ⁱ⁺¹]` where `Γ[i] = A'`.
 Together with `⊢ Γ`, this implies `Γ ⊢[l] .bvar i : A`. -/
 inductive Lookup : context → Nat → Typ  → Prop where
   | zero (Γ A) : Lookup (A :: Γ) 0 A
@@ -155,12 +155,24 @@ inductive WfTm : context → Typ → Exp → Prop
     ∀ i, (_ : i ≥ 0 ∧ i < l_ty.length) → Γ ⊢ l_exp[i] : l_ty[i] →
     Γ ⊢ .Call fn l_ty l_exp ty : ty
 
-  -- | T_callLambda :
-  --   ∀ Γ lam l_exp,
+  | T_callLambda :
+    ∀ Γ lam A B e, Γ ⊢ lam : Typ.SpecFn [A] B → Γ ⊢ e : A →
+    Γ ⊢ .CallLambda lam e : B
+
+  | T_var :
+    ∀ Γ i A, Lookup Γ i A → Γ ⊢ .Var i : A
+
+  | T_not :
+    ∀ Γ b, Γ ⊢ b : Typ._Bool → Γ ⊢ .Unary .Not b : Typ._Bool
+
+  /-- TODO: Add more possibilities of i -/
+  | T_bitnot :
+    ∀ Γ i, Γ ⊢ i : .Int .Int → Γ ⊢ .Unary (.BitNot _) i : .Int .Int
+
+  /-- TODO: Add more possibilities of i -/
+  | T_clip :
+    ∀ Γ i, Γ ⊢ i : .Int .Int → Γ ⊢ .Unary (.Clip _ _) i : .Int .Int
 
 
-  -- | Var (x : Nat)
-  -- | CallLambda (lam : Exp) (args : List Exp)
   -- | StructCtor (dt : Ident) (fields : List (String × Exp))
-  -- | Unary (op : UnaryOp) (arg : Exp)
   -- | Unaryr (op : UnaryOpr) (arg : Exp)

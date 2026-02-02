@@ -47,8 +47,8 @@ def rename_exp (ξ : Nat → Nat) : Exp → Exp
   | .Const c => .Const c
   | .Var x => .Var (ξ x)
   | .Call fn type exps ty=> .Call fn type (exps.map (rename_exp ξ)) ty
-  | .CallLambda lam args =>
-    .CallLambda (rename_exp ξ lam) (args.map (rename_exp ξ))
+  | .CallLambda lam arg =>
+    .CallLambda (rename_exp ξ lam) (rename_exp ξ arg)
   | .StructCtor dt fields =>
     .StructCtor dt (fields.attach.map
       fun ⟨(name, e), h⟩ =>
@@ -101,8 +101,8 @@ def subst_exp (σ : Nat → Exp) : Exp → Exp
   | .Const c => .Const c
   | .Var x => σ x
   | .Call fn type exps ty=> .Call fn type (exps.map (subst_exp σ)) ty
-  | .CallLambda body args =>
-    .CallLambda (subst_exp σ body) (args.map (subst_exp σ))
+  | .CallLambda body arg =>
+    .CallLambda (subst_exp σ body) (subst_exp σ arg)
   | .StructCtor dt fields =>
     .StructCtor dt (fields.attach.map
       fun ⟨(name, e), h⟩ =>
@@ -410,14 +410,7 @@ def isClosed (k : Nat := 0) (e: Exp): Bool:=
          grind [Prod.mk.sizeOf_spec]
     isClosed k e)
     --List.foldl (fun acc exp => acc && isClosed k exp) true exps
-  | CallLambda lam args => isClosed k lam &&
-    args.attach.all (fun e =>
-      have : sizeOf e.val < sizeOf args := by
-         have := List.sizeOf_lt_of_mem e.property
-         grind [Prod.mk.sizeOf_spec]
-    isClosed k e)
-
-    --List.foldl (fun acc exp => acc && isClosed k exp) true args
+  | CallLambda lam arg => isClosed k lam && isClosed k arg
   | StructCtor dt fields =>
     fields.attach.all (fun ⟨(name, e), h⟩ =>
       have : sizeOf e < sizeOf fields := by
@@ -477,12 +470,6 @@ theorem subst_of_isClosed' {e : Exp} {k} {σ : Nat → Exp} :
   intro h hσ; induction e generalizing k σ
   all_goals try simp[subst_exp] <;> grind[SbIsVar, isClosed]
   all_goals simp[subst_exp]; expose_names; simp [isClosed] at h
-  case _calllambda =>
-    constructor
-    . exact h_2 h.1 hσ
-    . apply map_id''_mem
-      intro x hmem
-      grind
   case _structctor =>
     simp [List.map_attach_eq_pmap, List.pmap_eq_map]
     apply map_id''_mem
