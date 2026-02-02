@@ -198,7 +198,7 @@ inductive Exp where
   /-- Local variables, as a right-hand side of an expression. -/
   | Var (x : Nat)
   /-- Call to spec function -/
-  | Call (fn : CallFun) (typs : List Typ) (exps : List Exp)
+  | Call (fn : CallFun) (typs : List Typ) (exps : List Exp) (ret : Typ)
   | CallLambda (lam : Exp) (args : List Exp)
   /-- A struct constructor -/
   | StructCtor (dt : Ident) (fields : List (String × Exp))
@@ -272,11 +272,11 @@ def Exp.hasDecEq (e₁ e₂ : Exp) : Decidable (e₁ = e₂) := by
     | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
     | isFalse h₁, _ | _, isFalse h₁  =>
       isFalse (by intro h₂; simp [h₁] at h₂)
-  case Call.Call fn₁ typs₁ exps₁ fn₂ typs₂ exps₂ =>
-    exact match decEq fn₁ fn₂, Typ.hasListDec typs₁ typs₂, Exp.hasListDec exps₁ exps₂ with
-    | isTrue h₁, isTrue h₂, isTrue h₃ => isTrue (by rw [h₁, h₂, h₃])
-    | isFalse h₁, _,  _ | _, isFalse h₁, _ | _, _, isFalse h₁ =>
-      isFalse (by intro h₃; simp [h₁] at h₃)
+  case Call.Call fn₁ typs₁ exps₁ ty₁ fn₂ typs₂ exps₂ ty₂ =>
+    exact match decEq fn₁ fn₂, Typ.hasListDec typs₁ typs₂, Exp.hasListDec exps₁ exps₂, decEq ty₁ ty₂ with
+    | isTrue h₁, isTrue h₂, isTrue h₃, isTrue h₄ => isTrue (by rw [h₁, h₂, h₃, h₄])
+    | isFalse h₁, _,  _, _ | _, isFalse h₁, _, _ | _, _, isFalse h₁, _ | _, _, _, isFalse h₁ =>
+      isFalse (by intro h₄; simp [h₁] at h₄)
   case CallLambda.CallLambda lam₁ args₁ lam₂ args₂ =>
     exact match Exp.hasDecEq lam₁ lam₂, Exp.hasListDec args₁ args₂ with
     | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
@@ -369,7 +369,7 @@ def Exp.syntactic_eq (e e' : Exp) : Option Bool :=
     match lam_eq, args_eq with
     | some b₁, some b₂ => def_eq (b₁ && b₂)
     | _, _ => none
-  | Call fn₁ _ exps₁, Call fn₂ _ exps₂ =>
+  | Call fn₁ _ exps₁ _, Call fn₂ _ exps₂ _=>
     let fn_eq := fn₁ = fn₂
     if exps₁.length == exps₂.length then
       let exps_eq := Exp.syntactic_eq_list exps₁ exps₂
@@ -398,7 +398,7 @@ nested or mutual induction types.
 theorem Exp.induct {P : Exp → Prop}
   (_exp : ∀c, P (.Const c))
   (_var : ∀x, P (.Var x))
-  (_call : ∀fn typs exps, (∀ e ∈ exps, P e) → P (.Call fn typs exps))
+  (_call : ∀fn typs exps, (∀ e ∈ exps, P e) → P (.Call fn typs exps ty))
   (_calllambda : ∀body args, (∀ e ∈ args, P e) → (P body) → P (.CallLambda body args))
   (_structctor : ∀dt fields, (∀ p ∈ fields, P p.2) → P (.StructCtor dt fields))
   (_tuplector : ∀size data, (∀ _e ∈ data, P _e) → P (.TupleCtor size data))
