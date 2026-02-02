@@ -72,6 +72,14 @@ inductive Lookup : context → Nat → Typ  → Prop where
   | zero (Γ A) : Lookup (A :: Γ) 0 A
   | succ {Γ A i} (B) : Lookup Γ i A → Lookup (B :: Γ) (i+1) A
 
+inductive Lookup_field : List (String × Exp) → List Typ → String → Typ → Prop where
+  | head {n : String} {e : Exp} {t : Typ} {fs : List (String × Exp)} {tys : List Typ} :
+    Lookup_field ((n, e) :: fs) (t :: tys) n t
+  | cons {n : String} {e : Exp} {t : Typ} {fs : List (String × Exp)} {tys : List Typ}
+      {field : String} {t' : Typ} :
+    Lookup_field fs tys field t → Lookup_field ((n, e) :: fs) (t' :: tys) field t
+
+
 inductive WfTm : context → Typ → Exp → Prop
   | T_bool :
     ∀ Γ b, Γ ⊢ Exp.Const (.Bool b) : Typ._Bool
@@ -173,6 +181,30 @@ inductive WfTm : context → Typ → Exp → Prop
   | T_clip :
     ∀ Γ i, Γ ⊢ i : .Int .Int → Γ ⊢ .Unary (.Clip _ _) i : .Int .Int
 
+  | T_floatToBits32 :
+    ∀ Γ f, Γ ⊢ f : .Float 32 → Γ ⊢ .Unary .FloatToBits f : .Int .Int
 
-  -- | StructCtor (dt : Ident) (fields : List (String × Exp))
-  -- | Unaryr (op : UnaryOpr) (arg : Exp)
+  | T_floatToBits64 :
+    ∀ Γ f, Γ ⊢ f : .Float 64 → Γ ⊢ .Unary .FloatToBits f : .Int .Int
+
+  | T_box :
+    ∀ Γ e A, Γ ⊢ e : A → Γ ⊢ .Unaryr (.Box A) e : .Decorated .Box A
+
+  | T_unbox :
+    ∀ Γ e A, Γ ⊢ e : .Decorated .Box A → Γ ⊢ .Unaryr (.Unbox A) e : A
+
+  | T_hasType :
+    ∀ Γ e, Γ ⊢ e : _ → Γ ⊢ .Unaryr (.HasType _) e : Typ._Bool
+
+  | T_isVariant :
+    ∀ Γ e, Γ ⊢ e : _ → Γ ⊢ .Unaryr (.IsVariant _ _) e : Typ._Bool
+
+  | T_structCtor :
+    ∀ Γ dt fields l_ty, (_ : l_ty.length = fields.length) →
+    ∀ i, (_ : i ≥ 0 ∧ i < l_ty.length) → Γ ⊢ fields[i].2 : l_ty[i] →
+    Γ ⊢ .StructCtor dt fields : .Struct dt l_ty
+
+  | T_proj :
+    ∀ Γ e A fields field l_ty, Γ ⊢ e : .Struct _ l_ty →
+    Lookup_field fields l_ty field A →
+    Γ ⊢ .Unaryr (.Proj field) e : A
