@@ -6,7 +6,7 @@ namespace VerusLean
 open Lean (Json ToJson FromJson)
 
 /-- Constant value literals -/
-inductive dConst
+inductive Const
   /-- Booleans. Uses Rust's built-in `bool` type. -/
   | Bool (b : Bool)
   /-- Integers of arbitrary size. Rust encodes these as a sign bit plus a vector of `u64`s. -/
@@ -97,20 +97,14 @@ inductive UnaryOpr where
   | Proj (field : String)
   /--
     Determines whether the element matches a given variant of an enum.
-
-    In Verus, this is defined under `UnaryOpr`.
   -/
   | IsVariant (dt : Ident) (variant : String)
   /--
     coerce Typ --> Boxed(Typ)
-
-    In Verus, this is defined under `UnaryOpr`.
   -/
   | Box (t : Typ)
   /--
     coerce Boxed(Typ) --> Typ
-
-    In Verus, this is defined under `UnaryOpr`.
   -/
   | Unbox (t : Typ)
   | HasType (t : Typ)
@@ -223,7 +217,6 @@ inductive Exp where
   | Let (tys : List Typ) (es : List Exp) (body : Exp)
   | Quant (q : Quant) (var : Typ) (body : Exp)
   | Lambda (var : Typ) (exp : Exp)
-  --TODO: figure out what this means
   | ArrayLiteral (elems : List Exp)
   --| MatchBlock (scrutinee : Exp × Typ) (body : Exp)
 deriving Repr, Inhabited, Hashable

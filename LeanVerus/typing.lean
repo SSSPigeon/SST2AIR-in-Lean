@@ -121,7 +121,7 @@ inductive WfTm : context → Typ → Exp → Prop
     Γ ⊢ .Binary (.Eq _) b₁ b₂ : Typ._Bool
 
   | T_ineq :
-    ∀ Γ b₁ b₂, Γ ⊢ b₁ : A → Γ ⊢ b₂ : A →
+    ∀ Γ b₁ b₂ A, Γ ⊢ b₁ : A → Γ ⊢ b₂ : A →
     Γ ⊢ .Binary (.Inequality _) b₁ b₂ : Typ._Bool
 
   /-- TODO: Add more possibilities, e.g., Γ ⊢ b₁ : Float -/
@@ -138,12 +138,26 @@ inductive WfTm : context → Typ → Exp → Prop
     ∀ Γ a i A, Γ ⊢ a : .Array A → Γ ⊢ i : .Int .Int →
     Γ ⊢ .Binary (.Index _ _) a i : A
 
+  | T_let :
+    ∀ Γ tys (l_ty : List Typ) l_exp body A, (_ : l_ty.length = l_exp.length) →
+    ∀ i, (_ : i ≥ 0 ∧ i < l_ty.length) → Γ ⊢ l_exp[i] : l_ty[i] →
+    l_ty.reverse.append Γ ⊢ body : A → Γ ⊢ .Let l_ty l_exp body : A
+
+  /-- Only closures in spec and proof mode are turned into λ-expressions. See the examples closure.rs, and closure_exec.rs-/
+  | T_lambda :
+    ∀ Γ A e B, A :: Γ ⊢ e : B → Γ ⊢ .Lambda A e : Typ.SpecFn [A] B
+
+  | T_quant :
+    ∀ Γ A e B, A :: Γ ⊢ e : B → Γ ⊢ .Quant _ A e : Typ._Bool
+
+  -- | T_call :
+  --   ∀ Γ fn (l_ty : List Typ) l_exp, (_ : l_ty.length = l_exp.length) →
+  --   ∀ i, (_ : i ≥ 0 ∧ i < l_ty.length) → Γ ⊢ l_exp[i] : l_ty[i] →
+
+
   -- | Var (x : Nat)
   -- | Call (fn : CallFun) (typs : List Typ) (exps : List Exp)
   -- | CallLambda (lam : Exp) (args : List Exp)
   -- | StructCtor (dt : Ident) (fields : List (String × Exp))
   -- | Unary (op : UnaryOp) (arg : Exp)
   -- | Unaryr (op : UnaryOpr) (arg : Exp)
-  -- | Let (tys : List Typ) (es : List Exp) (body : Exp)
-  -- | Quant (q : Quant) (var : Typ) (body : Exp)
-  -- | Lambda (var : Typ) (exp : Exp)
