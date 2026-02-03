@@ -22,8 +22,8 @@ def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
     | IntRange.ISize => sorry
     | IntRange.Char => Char
   | ⟨.Float w, _⟩ =>
-    if w = 32 then UInt32
-    else if w = 64 then UInt64
+    if w = 32 then Float32
+    else if w = 64 then Float
     else Empty
   | ⟨.TypParam p, h⟩ =>
     False.elim <|
@@ -37,10 +37,7 @@ def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
     List (domain dom_aux ⟨ t', h ⟩)
   | ⟨.SpecFn params ret, h⟩ => sorry
   | ⟨.Decorated dec t, h⟩ => sorry
-  | ⟨.Primitive prm t, h⟩ =>
-    match prm with
-    | .Array => sorry
-    | .StrSlice => String
+  | ⟨.Primitive prm t, h⟩ => sorry
   | ⟨.Tuple l, h⟩ => sorry
     -- match type_rep t₁ typ_env, type_rep t₂ typ_env with
     -- | some t₁', some t₂' => some (t₁' × t₂')
@@ -69,34 +66,10 @@ def typ_interp (te : typ_env) (dom_aux : ClosedTyp → Type) (t : Typ) :=
   domain dom_aux (typ_subst te t)
 
 
-section interp_results
-
-variable {tenv : typ_env} {dom_aux : ClosedTyp → Type} {t1 t2 : Typ}
-
-def interp_bool : typ_interp tenv dom_aux Typ._Bool = Bool := by
-  simp[typ_interp, typ_subst, domain]
-
-def interp_int : typ_interp tenv dom_aux (Typ.Int .Int) = Int := by
-  simp[typ_interp, typ_subst, domain]
-
-def interp_char : typ_interp tenv dom_aux (Typ.Int .Char) = Char := by
-  simp[typ_interp, typ_subst, domain]
-
-def interp_float32 : typ_interp tenv dom_aux (Typ.Float 32) = UInt32 := by
-  simp[typ_interp, typ_subst, domain]
-
-def interp_float64 : typ_interp tenv dom_aux (Typ.Float 64) = UInt64 := by
-  simp[typ_interp, typ_subst, domain]
-
-end interp_results
-
-
 section casting
 
-variable {tenv : typ_env} {dom_aux : ClosedTyp → Type} {t1 t2 : Typ}
-
-def cast_typ_interp  (h : t1 = t2) (e : typ_interp tenv dom_aux t1) :
-  typ_interp tenv dom_aux t2 :=
+def cast_typ_interp {te : typ_env} {dom_aux : ClosedTyp → Type} {t1 t2 : Typ} (h : t1 = t2) (e : typ_interp te dom_aux t1) :
+  typ_interp te dom_aux t2 :=
   match h with
   | rfl => e
 
