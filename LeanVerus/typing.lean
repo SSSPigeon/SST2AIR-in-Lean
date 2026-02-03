@@ -208,3 +208,11 @@ inductive WfTm : context → Typ → Exp → Prop
     ∀ Γ e A fields field l_ty, Γ ⊢ e : .Struct _ l_ty →
     Lookup_field fields l_ty field A →
     Γ ⊢ .Unaryr (.Proj field) e : A
+
+variable {Γ : context} {e : Exp} {t : Typ}
+
+lemma ty_constbool_inv (b : Bool)(h : Γ ⊢ Exp.Const (.Bool b) : t) : t = Typ._Bool := by
+  match h with
+  | WfTm.T_bool _ _ => rfl
+
+end typing

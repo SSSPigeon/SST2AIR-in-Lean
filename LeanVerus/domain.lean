@@ -68,9 +68,9 @@ def typ_interp (te : typ_env) (dom_aux : ClosedTyp → Type) (t : Typ) :=
 
 section casting
 
-def cast_typ_interp {te : typ_env} {dom_aux : ClosedTyp → Type}
-  {t1 t2 : Typ} (h : t1 = t2) :
-  typ_interp te dom_aux t1 ≃ typ_interp te dom_aux t2 :=
+def cast_typ_interp {te : typ_env} {dom_aux : ClosedTyp → Type} {t1 t2 : Typ} (h : t1 = t2) (e : typ_interp te dom_aux t1) :
+  typ_interp te dom_aux t2 :=
   match h with
-  | rfl => Equiv.refl _
+  | rfl => e
+
 end casting

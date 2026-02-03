@@ -11,21 +11,22 @@ def val_vars tenv (Γ: context) dom_aux :=  (i : Nat) → (_ : i < Γ.length) �
 
 
 def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) dom_aux (t : Typ) (e : Exp) (hty : Γ ⊢ e : t): typ_interp tenv dom_aux t:=
-  sorry
-  -- match e with
-  -- | .Const c =>
-  --   match c with
-  --   | .Bool b => b
-  --   | .Int i =>
-  --     match i with
-  --     | IntRange.Int => sorry
-  --     | IntRange.Nat => sorry
-  --     | IntRange.U u => sorry
-  --     | IntRange.I i => sorry
-  --     | IntRange.USize => sorry
-  --     | IntRange.ISize => sorry
-  --     | IntRange.Char => sorry
-  --   | .Float32 f => f
-  --   | .Float64 f => f
-  --   | _ => sorry
-  -- | _ => sorry
+  match e with
+  | .Const c =>
+    match c with
+    | .Bool b =>
+      have : typ_interp tenv dom_aux Typ._Bool = Bool := by simp[typ_interp, typ_subst, domain]
+      cast_typ_interp (ty_constbool_inv b hty).symm (cast this.symm b)
+    -- | .Int i =>
+    --   match i with
+    --   | IntRange.Int => sorry
+    --   | IntRange.Nat => sorry
+    --   | IntRange.U u => sorry
+    --   | IntRange.I i => sorry
+    --   | IntRange.USize => sorry
+    --   | IntRange.ISize => sorry
+    --   | IntRange.Char => sorry
+    -- | .Float32 f => f
+    -- | .Float64 f => f
+    | _ => sorry
+  | _ => sorry
