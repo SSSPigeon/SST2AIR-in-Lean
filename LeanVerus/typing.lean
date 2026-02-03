@@ -5,13 +5,13 @@ import LeanVerus.Autosubst
 namespace typing
 open VerusLean
 
-def context := List Typ
+abbrev context := List Typ
 
 declare_syntax_cat judgment
 scoped syntax:50 term:51 : judgment
 scoped syntax:50 term:51 " : " term:51 : judgment
 
-local syntax:25 term:51 " ⊢" judgment:50 : term
+syntax:25 term:51 " ⊢" judgment:50 : term
 
 set_option hygiene false in
 macro_rules

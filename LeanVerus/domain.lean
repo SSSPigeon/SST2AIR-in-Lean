@@ -1,5 +1,6 @@
 import LeanVerus.Hlist
 import LeanVerus.Typ
+import LeanVerus.Typing
 import Mathlib.Logic.IsEmpty
 
 open VerusLean
@@ -37,7 +38,7 @@ def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   | ⟨.SpecFn params ret, h⟩ => sorry
   | ⟨.Decorated dec t, h⟩ => sorry
   | ⟨.Primitive prm t, h⟩ => sorry
-  | ⟨.Tuple t₁ t₂, h⟩ => sorry
+  | ⟨.Tuple l, h⟩ => sorry
     -- match type_rep t₁ typ_env, type_rep t₂ typ_env with
     -- | some t₁', some t₂' => some (t₁' × t₂')
     -- | _, _ => none
@@ -60,3 +61,16 @@ structure pi_dom (t: ClosedTyp) where
   domain_ne: forall s, domain_nonempty (domain dom_aux) s
 
 end preinterpretation
+
+def typ_interp (te : typ_env) (dom_aux : ClosedTyp → Type) (t : Typ) :=
+  domain dom_aux (typ_subst te t)
+
+
+section casting
+
+def cast_typ_interp {te : typ_env} {dom_aux : ClosedTyp → Type}
+  {t1 t2 : Typ} (h : t1 = t2) :
+  typ_interp te dom_aux t1 ≃ typ_interp te dom_aux t2 :=
+  match h with
+  | rfl => Equiv.refl _
+end casting

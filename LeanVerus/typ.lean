@@ -239,7 +239,7 @@ def Typ.syntactic_eq_list (ts₁ ts₂ : List Typ) : Option Bool :=
     | none => none
 end
 
-def typ_env := String → ClosedTyp
+abbrev typ_env := String → ClosedTyp
 
 mutual
 def typ_subst (env : typ_env) (t : Typ) : ClosedTyp :=
