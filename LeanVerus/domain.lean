@@ -35,12 +35,13 @@ def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
       simp[Typ.is_closed] at h
       exact h
     List (domain dom_aux ⟨ t', h ⟩)
+  | ⟨.StrSlice, _⟩ => String
   | ⟨.SpecFn params ret, h⟩ => sorry
   | ⟨.Decorated dec t, h⟩ => sorry
-  |  ⟨.Primitive prm t, h⟩ =>
-    match prm with
-    | .Array => sorry
-    | .StrSlice => String
+  -- |  ⟨.Primitive prm t, h⟩ =>
+  --   match prm with
+  --   | .Array => sorry
+  --   | .StrSlice => String
   | ⟨.Tuple l, h⟩ => sorry
     -- match type_rep t₁ typ_env, type_rep t₂ typ_env with
     -- | some t₁', some t₂' => some (t₁' × t₂')
