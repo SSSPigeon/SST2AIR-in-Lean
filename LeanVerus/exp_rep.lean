@@ -15,18 +15,19 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) dom_aux (t : Typ) (e : Exp)
   | .Const c =>
     match c with
     | .Bool b =>
-      have : typ_interp tenv dom_aux Typ._Bool = Bool := by simp[typ_interp, typ_subst, domain]
-      cast_typ_interp (ty_constbool_inv b hty).symm (cast this.symm b)
-    -- | .Int i =>
-    --   match i with
-    --   | IntRange.Int => sorry
-    --   | IntRange.Nat => sorry
-    --   | IntRange.U u => sorry
-    --   | IntRange.I i => sorry
-    --   | IntRange.USize => sorry
-    --   | IntRange.ISize => sorry
-    --   | IntRange.Char => sorry
-    -- | .Float32 f => f
-    -- | .Float64 f => f
+      cast_typ_interp (ty_constbool_inv b hty).symm (cast interp_bool.symm b)
+    | .Int i =>
+      cast_typ_interp (ty_constint_inv i hty).symm (cast interp_int.symm i)
+    | .Char c =>
+      cast_typ_interp (ty_constchar_inv c hty).symm (cast interp_char.symm c)
+    | .Float32 f => sorry
+    | .Float64 f => sorry
+    -- | .StrSlice s =>
+    --   cast_typ_interp (ty_conststrslice_inv s hty).symm (cast interp_strslice.symm s)
+
+
+
+
+
     | _ => sorry
   | _ => sorry

@@ -215,4 +215,24 @@ lemma ty_constbool_inv (b : Bool)(h : Γ ⊢ Exp.Const (.Bool b) : t) : t = Typ.
   match h with
   | WfTm.T_bool _ _ => rfl
 
+lemma ty_constint_inv (i : Int)(h : Γ ⊢ Exp.Const (.Int i) : t) : t = Typ.Int .Int := by
+  match h with
+  | WfTm.T_int _ _ => rfl
+
+lemma ty_constchar_inv (c : Char)(h : Γ ⊢ Exp.Const (.Char c) : t) : t = Typ.Int .Char := by
+  match h with
+  | WfTm.T_char _ _ => rfl
+
+lemma ty_constfloat32_inv (f : UInt32)(h : Γ ⊢ Exp.Const (.Float32 f) : t) : t = Typ.Float 32 := by
+  match h with
+  | WfTm.T_float32 _ _ => rfl
+
+lemma ty_constfloat64_inv (f : UInt64)(h : Γ ⊢ Exp.Const (.Float64 f) : t) : t = Typ.Float 64 := by
+  match h with
+  | WfTm.T_float64 _ _ => rfl
+
+-- lemma ty_conststrslice_inv (s : String)(h : Γ ⊢ Exp.Const (.StrSlice s) : t) : t = Typ.Primitive .StrSlice (Typ._Bool) := by
+--   match h with
+--   | WfTm.T_const_strslice _ _ => rfl
+
 end typing
