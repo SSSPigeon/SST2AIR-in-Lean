@@ -41,11 +41,14 @@ inductive WfTp : context → Typ → Prop
   | array :
     ∀ Γ t, Γ ⊢ t → Γ ⊢ .Array t
 
+  | strslice :
+    ∀ Γ, Γ ⊢ .StrSlice
+
   | decorated :
     ∀ Γ d t, Γ ⊢ t → Γ ⊢ .Decorated d t
 
-  | primitive :
-    ∀ Γ p t, Γ ⊢ t → Γ ⊢ .Primitive p t
+  -- | primitive :
+  --   ∀ Γ p t, Γ ⊢ t → Γ ⊢ .Primitive p t
 
   | tuple :
     ∀ Γ l, ∀ t ∈ l, Γ ⊢ t → Γ ⊢ .Tuple l
