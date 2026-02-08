@@ -96,10 +96,11 @@ inductive Typ where
   | Int (i: IntRange)
   | Float (width: UInt32)
   | Array (t : Typ)       /- Array, ignore length in Rust     -/
+  | StrSlice
   | TypParam (i : String)  /- Type parameter. For example, `α` in `List α`. -/
   | SpecFn (params : List Typ) (ret : Typ)    /-`spec_fn` type (t1, ..., tn) -> t0. -/
   | Decorated (dec : TypDecoration) (ty : Typ)
-  | Primitive (prm: Primitive) (ty: Typ)
+  -- | Primitive (prm: Primitive) (ty: Typ)
   /-- Tuple, Enum, and Struct are simple cases of Dt in Rust -/
   | Tuple (l : List Typ) /- In Lean, these are `Prod`s. -/
   /--
@@ -140,10 +141,11 @@ def Typ.is_closed (t : Typ): Bool :=
   | .Int _ => true
   | .Float _ => true
   | .Array t' => is_closed t'
+  | .StrSlice => true
   | .TypParam _ => false
   | .SpecFn params ret => is_closed ret && is_closed_list params
   | .Decorated _ t' => is_closed t'
-  | .Primitive _ t' => is_closed t'
+  -- | .Primitive _ t' => is_closed t'
   | .Tuple l => is_closed_list l
   | .Struct _ fields => is_closed_list fields
   | .Enum _ params => is_closed_list params
@@ -163,7 +165,7 @@ mutual
 def Typ.hasDecEq (t t' : Typ) : Decidable (t = t') := by
   cases t <;> cases t' <;>
   try { apply isFalse ; intro h ; injection h }
-  case _Bool._Bool => apply isTrue; rfl
+  case _Bool._Bool | StrSlice => apply isTrue; rfl
   case Int.Int v₁ v₂ | Float.Float v₁ v₂ | TypParam.TypParam v₁ v₂ | AirNamed.AirNamed v₁ v₂ =>
     exact match decEq v₁ v₂ with
     | isTrue h => isTrue (by rw [h])
@@ -172,7 +174,7 @@ def Typ.hasDecEq (t t' : Typ) : Decidable (t = t') := by
     exact match Typ.hasDecEq v₁ v₂ with
     | isTrue h => isTrue (by rw [h])
     | isFalse _ => isFalse (by intro h; injection h; contradiction)
-  case Decorated.Decorated p₁ ty₁ p₂ ty₂ | Primitive.Primitive p₁ ty₁ p₂ ty₂ =>
+  case Decorated.Decorated p₁ ty₁ p₂ ty₂ => --| Primitive.Primitive p₁ ty₁ p₂ ty₂
     exact match decEq p₁ p₂, Typ.hasDecEq ty₁ ty₂ with
     | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
     | isFalse h₁, _ | _, isFalse h₁  =>
@@ -250,6 +252,7 @@ def typ_subst (env : typ_env) (t : Typ) : ClosedTyp :=
   | .Array t' =>
     ⟨ .Array (typ_subst env t').1, by
       simp [Typ.is_closed]; exact (typ_subst env t').2⟩
+  | .StrSlice => ⟨ .StrSlice, by rfl ⟩
   | .TypParam t => env t
   | .SpecFn params ret =>
     let r  := typ_subst env ret
@@ -259,9 +262,9 @@ def typ_subst (env : typ_env) (t : Typ) : ClosedTyp :=
   | .Decorated d t' =>
     ⟨ .Decorated d (typ_subst env t').1, by
       simp [Typ.is_closed]; exact (typ_subst env t').2⟩
-  | .Primitive p t' =>
-    ⟨ .Primitive p (typ_subst env t').1, by
-      simp [Typ.is_closed]; exact (typ_subst env t').2⟩
+  -- | .Primitive p t' =>
+  --   ⟨ .Primitive p (typ_subst env t').1, by
+  --     simp [Typ.is_closed]; exact (typ_subst env t').2⟩
   | .Tuple l =>
     let l' := typ_subst_list env l
     ⟨.Tuple l'.1, by
