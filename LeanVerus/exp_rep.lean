@@ -22,12 +22,7 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) dom_aux (t : Typ) (e : Exp)
       cast_typ_interp (ty_constchar_inv c hty).symm (cast interp_char.symm c)
     | .Float32 f => sorry
     | .Float64 f => sorry
-    -- | .StrSlice s =>
-    --   cast_typ_interp (ty_conststrslice_inv s hty).symm (cast interp_strslice.symm s)
+    | .StrSlice s =>
+      cast_typ_interp (ty_strslice_inv s hty).symm (cast interp_strslice.symm s)
 
-
-
-
-
-    | _ => sorry
   | _ => sorry

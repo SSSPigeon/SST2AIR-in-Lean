@@ -107,6 +107,9 @@ inductive WfTm : context → Typ → Exp → Prop
   | T_array :
     ∀ Γ l A, ∀ e ∈ l, Γ ⊢ e : A → Γ ⊢ .ArrayLiteral l : .Array A
 
+  | T_strslice :
+    ∀ Γ s, Γ ⊢ Exp.Const (.StrSlice s) : .StrSlice
+
   | T_if :
     ∀ Γ c b₁ b₂ A, Γ ⊢ c : Typ._Bool → Γ ⊢ b₁ : A → Γ ⊢ b₂ : A →
     Γ ⊢ .If c b₁ b₂ : A
@@ -234,8 +237,8 @@ lemma ty_constfloat64_inv (f : UInt64)(h : Γ ⊢ Exp.Const (.Float64 f) : t) : 
   match h with
   | WfTm.T_float64 _ _ => rfl
 
--- lemma ty_conststrslice_inv (s : String)(h : Γ ⊢ Exp.Const (.StrSlice s) : t) : t = Typ.Primitive .StrSlice (Typ._Bool) := by
---   match h with
---   | WfTm.T_const_strslice _ _ => rfl
+lemma ty_strslice_inv (s : String)(h : Γ ⊢ Exp.Const (.StrSlice s) : t) : t = Typ.StrSlice := by
+  match h with
+  | WfTm.T_strslice _ _ => rfl
 
 end typing

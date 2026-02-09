@@ -1,13 +1,17 @@
 import LeanVerus.Hlist
 import LeanVerus.Typ
 import LeanVerus.Typing
-import Mathlib.Logic.IsEmpty
+-- import Mathlib.Logic.IsEmpty
 
 open VerusLean
 
 def arg_list (domain: ClosedTyp → Type) := hlist domain
 
 section preinterpretation
+
+inductive Error : Type where
+  | UninterpretedType
+
 -- TODO: Consider choosing Option Type as the output type
 def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   match t with
@@ -24,7 +28,7 @@ def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   | ⟨.Float w, _⟩ =>
     if w = 32 then UInt32
     else if w = 64 then UInt64
-    else Empty
+    else Error
   | ⟨.TypParam p, h⟩ =>
     False.elim <|
     show False from by
@@ -86,6 +90,9 @@ def interp_float32 : typ_interp tenv dom_aux (Typ.Float 32) = UInt32 := by
   simp[typ_interp, typ_subst, domain]
 
 def interp_float64 : typ_interp tenv dom_aux (Typ.Float 64) = UInt64 := by
+  simp[typ_interp, typ_subst, domain]
+
+def interp_strslice : typ_interp tenv dom_aux Typ.StrSlice = String := by
   simp[typ_interp, typ_subst, domain]
 
 end interp_results
