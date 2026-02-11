@@ -3,7 +3,7 @@ import LeanVerus.Exp
 import LeanVerus.Autosubst
 
 namespace typing
-open VerusLean
+open sst
 
 abbrev context := List Typ
 

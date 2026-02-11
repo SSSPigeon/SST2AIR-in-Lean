@@ -1,6 +1,6 @@
 import Lean.Meta.Tactic.Simp
 
-namespace VerusLean
+namespace sst
 
 open Lean (Json ToJson FromJson)
 

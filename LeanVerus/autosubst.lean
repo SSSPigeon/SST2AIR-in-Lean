@@ -40,7 +40,7 @@ theorem upr_id (n: Nat) : upr id n = id := by
 theorem upr_one (ξ : Nat → Nat) : upr ξ 1 = snoc (fun i => ξ i + 1) 0 := by
   simp only [upr]
 
-namespace VerusLean.Exp
+namespace sst.Exp
 
 
 def rename_exp (ξ : Nat → Nat) : Exp → Exp

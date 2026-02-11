@@ -8,9 +8,9 @@
 -/
 
 import Lean.Data.Json
--- import VerusLean.Basic
+-- import sst.Basic
 
-namespace VerusLean
+namespace sst
 
 open Lean (Json ToJson FromJson)
 
@@ -608,4 +608,4 @@ def Decl.shouldInclude : Decl → Bool
   | .struct s => !s.isVstd
   | _ => true
 
-end VerusLean
+end sst

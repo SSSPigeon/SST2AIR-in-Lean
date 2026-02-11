@@ -4,7 +4,7 @@ import LeanVerus.Typing
 import LeanVerus.Autosubst
 import Mathlib.Data.Int.Bitwise
 
-open VerusLean Std
+open sst Std
 
 abbrev var_env := Nat → Exp
 
@@ -454,9 +454,9 @@ inductive Eval: var_env → func_env → Exp → Exp → Prop where
 
   /-- Call-/
   | call_recursive :
-    ∀ (v : var_env) (f : func_env) (fn : Ident) (typs : List Typ) (exps : List Exp),
+    ∀ (v : var_env) (f : func_env) (fn : Ident) (typs : List Typ) (exps : List Exp) (ret : Typ),
     -- WsTm v.length (.Call (.Recursive fn) typs exps) →
-    Eval v f (.Call (.Recursive fn) typs exps) (.Call (.Recursive fn) typs exps)
+    Eval v f (.Call (.Recursive fn) typs exps ret) (.Call (.Recursive fn) typs exps ret)
 
   /-- ArrayLiteral -/
   | array_literal :

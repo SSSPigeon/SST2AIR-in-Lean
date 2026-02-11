@@ -1,6 +1,6 @@
 import LeanVerus.My_sst
 
-open VerusLean
+open sst
 
 namespace typ_rep
 

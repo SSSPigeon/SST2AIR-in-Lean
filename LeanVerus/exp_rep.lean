@@ -3,7 +3,7 @@ import LeanVerus.Typing
 import LeanVerus.Exp
 import LeanVerus.Domain
 
-open VerusLean typing
+open sst typing
 
 variable (tenv : typ_env)  (dom_aux : ClosedTyp → Type)
 

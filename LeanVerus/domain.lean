@@ -3,7 +3,7 @@ import LeanVerus.Typ
 import LeanVerus.Typing
 -- import Mathlib.Logic.IsEmpty
 
-open VerusLean
+open sst
 
 def arg_list (domain: ClosedTyp → Type) := hlist domain
 

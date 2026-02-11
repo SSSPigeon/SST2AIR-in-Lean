@@ -5,7 +5,7 @@ import LeanVerus.Exp
 
 namespace airast
 
-open VerusLean
+open sst
 
 inductive TypX
   | Bool
@@ -111,7 +111,7 @@ inductive Expr where
   | Const (c: Constant)
   | Var (name: Nat)
   | Old (i1: Ident) (i2: Ident)
-  | Apply (i: Ident) (args: List Expr)
+  | Apply (i: String) (args: List Expr)
   | ApplyFun (tp: Typ) (f: Expr) (args: List Expr)
   | Unary (op: UnaryOp) (e: Expr)
   | Binary (op: BinaryOp) (e1: Expr) (e2: Expr)

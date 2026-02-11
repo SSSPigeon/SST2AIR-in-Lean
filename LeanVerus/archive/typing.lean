@@ -1,6 +1,6 @@
 import LeanVerus.Exp
 
-open VerusLean Std List
+open sst Std List
 
 inductive WsTm : Nat → Exp → Prop
   | const : ∀ n c,
