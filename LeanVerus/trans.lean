@@ -25,17 +25,14 @@ def transf (e : sst.Exp) : Expr :=
   | .Var idx => .Var idx
   | .Binary op e₁ e₂ =>
     match op with
-    -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L1253
-    | .Arith .Add _ => sorry
+    | .Arith op' _ =>
+      match op' with
+      -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L1253
+      | .Add => .Apply "ADD" [transf e₁, transf e₂]
+      | _ => sorry
+    | .And => .Multi .And [transf e₁, transf e₂]
+    -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L1311
+    | .Index _ _ => .Apply "ARRAY_INDEX" [transf e₁, transf e₂]
     | _ => sorry
 
---   | .UnaryOp op e1 =>
---     let op' :=
---       match op with
---       | .Not => airast.UnaryOp.Not
---       | .BitNot => airast.UnaryOp.BitNot
---       | .BitExtract high low => airast.UnaryOp.BitExtract high low
---       | .BitZeroExtend fr => airast.UnaryOp.BitZeroExtend fr
---       | .BitSignExtend fr => airast.UnaryOp.BitSignExtend fr
---     airast.Exp.UnaryOp op
    | _ => sorry

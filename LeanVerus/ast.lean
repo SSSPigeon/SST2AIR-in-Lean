@@ -37,7 +37,7 @@ inductive Relation
   | PiecewiseOrder
 deriving Repr, Inhabited, DecidableEq, Hashable
 
-inductive binop
+inductive Binop
   | Implies
   | Eq
   | Le
@@ -114,7 +114,7 @@ inductive Expr where
   | Apply (i: String) (args: List Expr)
   | ApplyFun (tp: Typ) (f: Expr) (args: List Expr)
   | Unary (op: UnaryOp) (e: Expr)
-  | Binary (op: BinaryOp) (e1: Expr) (e2: Expr)
+  | Binary (op: Binop) (e1: Expr) (e2: Expr)
   | Multi (op: MultiOp) (es: List Expr)
   | IfElse (cond: Expr) (then_: Expr) (else_: Expr)
   | Array (es: List Expr)
