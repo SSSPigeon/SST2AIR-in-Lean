@@ -81,12 +81,12 @@ inductive MultiOp
   | Distinct --?
 deriving Repr, Inhabited, DecidableEq, Hashable
 
-structure Binder (A : Type) where
-  name : Ident
-  a : A
-deriving Repr, Inhabited, DecidableEq, Hashable
+-- structure Binder (A : Type) where
+--   name : Ident
+--   a : A
+-- deriving Repr, Inhabited, DecidableEq, Hashable
 
-abbrev Binders (A : Type) := List (Binder A)
+-- abbrev Binders (A : Type) := List (Binder A)
 
 inductive Quant
   | Forall
@@ -99,13 +99,13 @@ deriving Repr, Inhabited, DecidableEq, Hashable
 mutual
 
 
-inductive BindX where
-  -- | Let (binders: Binders Expr)
-  | Let (binder: List (Binder Expr))
-  | Quant (q: Quant) (binders: Binders TypX) (triggers: List (List Expr)) (qid: Qid)
-  | Lambda (binders: Binders TypX)  --(triggers: List (List Expr)) (qid: Qid)
-  | Choose (binders: Binders TypX)  --(triggers: List (List Expr)) (qid: Qid) (body: Expr)
-deriving Repr, Inhabited, Hashable
+-- inductive BindX where
+--   -- | Let (binders: Binders Expr)
+--   | Let (binder: List (Binder Expr))
+--   | Quant (q: Quant) (binders: Binders TypX) (triggers: List (List Expr)) (qid: Qid)
+--   | Lambda (binders: Binders TypX)  --(triggers: List (List Expr)) (qid: Qid)
+--   | Choose (binders: Binders TypX)  --(triggers: List (List Expr)) (qid: Qid) (body: Expr)
+-- deriving Repr, Inhabited, Hashable
 
 inductive Expr where
   | Const (c: Constant)
@@ -118,7 +118,11 @@ inductive Expr where
   | Multi (op: MultiOp) (es: List Expr)
   | IfElse (cond: Expr) (then_: Expr) (else_: Expr)
   | Array (es: List Expr)
-  | Bind (b: BindX) (body: Expr)
+  | Let (tys : List TypX) (es : List Expr) (body : Expr)
+  | Quant (q: Quant) (var : TypX) (body : Expr)
+  | Lambda (var : TypX) (exp : Expr)
+  --| Choose (binders: Binders TypX)  --(triggers: List (List Expr)) (qid: Qid) (body: Expr)
+  -- | Bind (b: BindX) (body: Expr)
 deriving Repr, Inhabited, Hashable
 
 end --(mutual)
@@ -140,59 +144,57 @@ deriving Repr, Inhabited, Hashable
 def Stmts := List Stmt
 deriving Repr, Inhabited, Hashable
 
-structure Axiom where
-  named: Option Ident
-  expr: Expr
+def Axiom := Expr
 deriving Repr, Inhabited, Hashable
 
-def Field := Binder TypX
-deriving Repr, Inhabited, Hashable
+-- def Field := Binder TypX
+-- deriving Repr, Inhabited, Hashable
 
-def Fields := List Field
-deriving Repr, Inhabited, Hashable
+-- def Fields := List Field
+-- deriving Repr, Inhabited, Hashable
 
-def Variant := Binder Fields
-deriving Repr, Inhabited, Hashable
+-- def Variant := Binder Fields
+-- deriving Repr, Inhabited, Hashable
 
-def Variants := Binders Fields
-deriving Repr, Inhabited, Hashable
+-- def Variants := Binders Fields
+-- deriving Repr, Inhabited, Hashable
 
-def Datatype := Binder Variants
-deriving Repr, Inhabited, Hashable
+-- def Datatype := Binder Variants
+-- deriving Repr, Inhabited, Hashable
 
-def Datatypes := Binders Variants
-deriving Repr, Inhabited, Hashable
+-- def Datatypes := Binders Variants
+-- deriving Repr, Inhabited, Hashable
 
-inductive Decl
-  | Sort (i: Ident)
-  | Datatypes (dts: Datatypes)
-  | Const (i: Ident) (tp: TypX)
-  | Fun (i: Ident) (tps: List TypX) (ret: TypX)
-  | Var (i: Ident) (tp: TypX)
-  | Axiom (ax: Axiom)
-deriving Repr, Inhabited, Hashable
+-- inductive Decl
+--   | Sort (i: Ident)
+--   | Datatypes (dts: Datatypes)
+--   | Const (i: Ident) (tp: TypX)
+--   | Fun (i: Ident) (tps: List TypX) (ret: TypX)
+--   | Var (i: Ident) (tp: TypX)
+--   | Axiom (ax: Axiom)
+-- deriving Repr, Inhabited, Hashable
 
-def Decls := List Decl
-deriving Repr, Inhabited, Hashable
+-- def Decls := List Decl
+-- deriving Repr, Inhabited, Hashable
 
-structure Query where
-  _local: Decls
-  assertion: Stmt
-deriving Repr, Inhabited, Hashable
+-- structure Query where
+--   _local: Decls
+--   assertion: Stmt
+-- deriving Repr, Inhabited, Hashable
 
-structure SingularQuery where
-  _local: Decls
-  requires: Stmts
-  ensures: Stmts
-deriving Repr, Inhabited, Hashable
+-- structure SingularQuery where
+--   _local: Decls
+--   requires: Stmts
+--   ensures: Stmts
+-- deriving Repr, Inhabited, Hashable
 
-inductive CommandX
-  | Push
-  | Pop
-  | SetOption (i1: Ident) (i2: Ident)
-  | Global (d: Decl)
-  | CheckValid (q: Query)
-  | CheckSingular (sq: SingularQuery)
-deriving Repr, Inhabited, Hashable
+-- inductive CommandX
+--   | Push
+--   | Pop
+--   | SetOption (i1: Ident) (i2: Ident)
+--   | Global (d: Decl)
+--   | CheckValid (q: Query)
+--   | CheckSingular (sq: SingularQuery)
+-- deriving Repr, Inhabited, Hashable
 
 end airast
