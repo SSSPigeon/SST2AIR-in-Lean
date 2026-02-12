@@ -1,7 +1,7 @@
 import Init.Prelude
 import Init.Data
-import LeanVerus.Typ
-import LeanVerus.Exp
+import LeanVerus.Sst.Typ
+import LeanVerus.Sst.Exp
 
 namespace airast
 

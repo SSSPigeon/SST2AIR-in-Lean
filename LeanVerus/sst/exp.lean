@@ -1,5 +1,5 @@
 import Lean.Meta.Tactic.Simp
-import LeanVerus.Typ
+import LeanVerus.Sst.Typ
 
 namespace sst
 

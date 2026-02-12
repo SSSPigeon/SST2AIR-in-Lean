@@ -1,6 +1,6 @@
-import LeanVerus.Typ
-import LeanVerus.Exp
-import LeanVerus.Autosubst
+import LeanVerus.Sst.Typ
+import LeanVerus.Sst.Exp
+import LeanVerus.Sst.Autosubst
 
 namespace typing
 open sst

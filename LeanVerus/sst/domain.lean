@@ -1,6 +1,6 @@
-import LeanVerus.Hlist
-import LeanVerus.Typ
-import LeanVerus.Typing
+import LeanVerus.Util.Hlist
+import LeanVerus.Sst.Typ
+import LeanVerus.Sst.Typing
 -- import Mathlib.Logic.IsEmpty
 
 open sst

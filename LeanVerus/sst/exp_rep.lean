@@ -1,7 +1,7 @@
-import LeanVerus.Typ
-import LeanVerus.Typing
-import LeanVerus.Exp
-import LeanVerus.Domain
+import LeanVerus.Sst.Typ
+import LeanVerus.Sst.Typing
+import LeanVerus.Sst.Exp
+import LeanVerus.Sst.Domain
 
 open sst typing
 
