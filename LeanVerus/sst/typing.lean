@@ -73,7 +73,7 @@ From HoTTLean:
 Together with `⊢ Γ`, this implies `Γ ⊢[l] .bvar i : A`. -/
 inductive Lookup : context → Nat → Typ  → Prop where
   | zero (Γ A) : Lookup (A :: Γ) 0 A
-  | succ {Γ A i} (B) : Lookup Γ i A → Lookup (B :: Γ) (i+1) A
+  | succ (Γ A i B) : Lookup Γ i A → Lookup (B :: Γ) (i+1) A
 
 inductive Lookup_field : List (String × Exp) → List Typ → String → Typ → Prop where
   | head {n : String} {e : Exp} {t : Typ} {fs : List (String × Exp)} {tys : List Typ} :
@@ -240,5 +240,28 @@ lemma ty_constfloat64_inv (f : UInt64)(h : Γ ⊢ Exp.Const (.Float64 f) : t) : 
 lemma ty_strslice_inv (s : String)(h : Γ ⊢ Exp.Const (.StrSlice s) : t) : t = Typ.StrSlice := by
   match h with
   | WfTm.T_strslice _ _ => rfl
+
+lemma ty_var_withinbound (i : Nat)(h : Γ ⊢ .Var i : t) : i < Γ.length := by
+  match h with
+  | WfTm.T_var _ _ _ h =>
+    induction h with
+    | zero _ _ => simp
+    | succ Γ A i B h ih =>
+      simp
+      expose_names
+      exact ih (WfTm.T_var Γ i A h_1)
+
+lemma ty_var_inv_aux (i : Nat)(h : Γ ⊢ .Var i : t) :  (_ : i < Γ.length) →  t = Γ[i] := by
+  match h with
+  | WfTm.T_var _ _ _ h =>
+    intro hl
+    induction h with
+    | zero _ _ => rfl
+    | succ Γ A i B h ih =>
+      simp
+      expose_names
+      have ha := ih (WfTm.T_var Γ i A h_1) (Nat.lt_of_succ_lt_succ hl)
+      rw [ha]
+
 
 end typing
