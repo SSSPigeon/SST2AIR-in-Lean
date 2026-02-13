@@ -28,13 +28,6 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
       cast_typ_interp (ty_strslice_inv s hty).symm (cast interp_strslice.symm s)
 
   | .Var i =>
-    have hl : i < Γ.length := by sorry
-      -- match hty with
-      -- | WfTm.T_var _ _ _ h => exact h
-      -- | _ => sorry
-    have t_eq : t = Γ[i] := by sorry
-      -- match hty with
-      -- | WfTm.T_var _ _ _ h => exact h
-      -- | _ => sorry
-    cast_typ_interp t_eq.symm (venv i hl)
+    cast_typ_interp (ty_var_inv i hty).symm (venv i (ty_var_withinbound i hty))
+
   | _ => sorry

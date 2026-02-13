@@ -251,17 +251,14 @@ lemma ty_var_withinbound (i : Nat)(h : Γ ⊢ .Var i : t) : i < Γ.length := by
       expose_names
       exact ih (WfTm.T_var Γ i A h_1)
 
-lemma ty_var_inv_aux (i : Nat)(h : Γ ⊢ .Var i : t) :  (_ : i < Γ.length) →  t = Γ[i] := by
+lemma ty_var_inv (i : Nat)(h : Γ ⊢ .Var i : t) :  t = Γ[i]'(ty_var_withinbound i h) := by
   match h with
   | WfTm.T_var _ _ _ h =>
-    intro hl
     induction h with
     | zero _ _ => rfl
     | succ Γ A i B h ih =>
       simp
       expose_names
-      have ha := ih (WfTm.T_var Γ i A h_1) (Nat.lt_of_succ_lt_succ hl)
-      rw [ha]
-
+      exact ih (WfTm.T_var Γ i A h_1)
 
 end typing
