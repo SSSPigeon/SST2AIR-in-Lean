@@ -2,6 +2,8 @@ import LeanVerus.Sst.Typ
 import LeanVerus.Sst.Exp
 import LeanVerus.Sst.Autosubst
 
+import Mathlib.Tactic.Lift
+
 namespace typing
 open sst
 
@@ -83,7 +85,7 @@ inductive Lookup_field : List (String × Exp) → List Typ → String → Typ �
     Lookup_field fs tys field t → Lookup_field ((n, e) :: fs) (t' :: tys) field t
 
 
-inductive WfTm : context → Typ → Exp → Prop
+inductive WfTm : context → Typ → Exp → Type
   | T_bool :
     ∀ Γ b, Γ ⊢ Exp.Const (.Bool b) : Typ._Bool
 
@@ -260,5 +262,28 @@ lemma ty_var_inv (i : Nat)(h : Γ ⊢ .Var i : t) :  t = Γ[i]'(ty_var_withinbou
       simp
       expose_names
       exact ih (WfTm.T_var Γ i A h_1)
+
+-- | T_array :
+--     ∀ Γ l A, ∀ e ∈ l, Γ ⊢ e : A → Γ ⊢ .ArrayLiteral l : .Array A
+
+-- def array_elem_typ (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : Typ :=
+--   match h with
+--   | WfTm.T_array _ _ A _ _ _ => A
+
+-- def ty_array_inv (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : Σ A : Typ, PLift (t = .Array A) :=
+--   match h with
+--   | WfTm.T_array _ _ A _ _ _ => ⟨A, PLift.up rfl⟩
+
+def ty_array_inv (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : { A : Typ // (t = .Array A) }:=
+  match h with
+  | WfTm.T_array _ _ A _ _ _ => ⟨A, rfl⟩
+
+-- lemma ty_array_inv (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : ∃ A : Typ, t = .Array A :=
+--   match h with
+--   | WfTm.T_array _ _ A _ _ _ => ⟨A, rfl⟩
+
+-- noncomputable
+-- def array_elem_typ (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : Typ :=
+--   Classical.choose (ty_array_inv l h)
 
 end typing

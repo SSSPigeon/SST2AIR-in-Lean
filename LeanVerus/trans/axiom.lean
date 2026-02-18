@@ -8,7 +8,7 @@ def axioms := Set Axiom
 def ADD_axiom : Axiom :=
   .Quant .Forall .Int
     (.Quant .Forall .Int (.Binary .Eq
-      (.Apply "ARRAY_INDEX" [.Var 1, .Var 0])
+      (.Apply "ADD" [.Var 1, .Var 0])
       (.Multi .Add [.Var 1, .Var 0])))
 
 def ARRAY_INDEX_axiom : Axiom := sorry

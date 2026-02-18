@@ -3,6 +3,7 @@ import LeanVerus.Sst.Typing
 import LeanVerus.Sst.Exp
 import LeanVerus.Sst.Domain
 
+
 open sst typing
 
 variable (tenv : typ_env)  (dom_aux : ClosedTyp → Type)
@@ -29,5 +30,23 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
 
   | .Var i =>
     cast_typ_interp (ty_var_inv i hty).symm (venv i (ty_var_withinbound i hty))
+
+  | .ArrayLiteral es =>
+    -- let A: Typ :=
+    --   match (ty_array_inv es hty) with
+    --   | ⟨A, hA⟩ => sorry
+    sorry
+
+  | .Unaryr op arg =>
+    match op with
+    | .Box t' => sorry
+    | .Unbox t' => sorry
+    | .IsVariant dt var => sorry
+    | .Proj field => sorry
+    | .HasType t' => sorry
+
+  | .Unary op arg => sorry
+
+
 
   | _ => sorry

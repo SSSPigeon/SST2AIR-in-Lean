@@ -1,13 +1,33 @@
-import LeanVerus.Typ
-import LeanVerus.Typing
-import LeanVerus.Exp
-import LeanVerus.Domain
-import LeanVerus.Ast
-import LeanVerus.Axiom
+import LeanVerus.Sst.Typ
+import LeanVerus.Sst.Typing
+import LeanVerus.Sst.Exp
+import LeanVerus.Sst.Domain
+import LeanVerus.Air_ast.Ast
+import LeanVerus.Trans.Axiom
 
 open sst typing airast Std
 
 variable (tenv : typ_env)  (dom_aux : ClosedTyp → Type)
+
+/--
+  In Why3-Coq,
+  Γ : types, function definitions, predicate definitions
+  Δ : axioms
+  I : full interpretation of Γ
+  Soundness: If Γ', Δ' ⊨ g', then Γ, Δ ⊨ g (∀ I, I ⊨ Δ => I ⊨ g)
+
+  In our case,
+  Γ : function definitions
+  Δ : axioms
+  I : full interpretation of Γ
+  Soundness:
+    (a) in sst, Δ = ∅
+    (b) after translation, we have Δ' containing axioms introduced during translation
+    (c) Γ' = Γ
+    (d) I' is the full interpretation of Γ that satisfies Δ'
+    Given: I, define I'
+      I(e) ≃ I'(e') for all e ∈ Sst.Exp
+-/
 
 def transf (e : sst.Exp) (aenv : axioms) : Expr × axioms:=
   match e with
