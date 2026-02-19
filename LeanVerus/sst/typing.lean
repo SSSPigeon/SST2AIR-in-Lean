@@ -202,7 +202,7 @@ inductive WfTm : context → Typ → Exp → Type
     ∀ Γ e A, Γ ⊢ e : .Decorated .Box A → Γ ⊢ .Unaryr (.Unbox A) e : A
 
   | T_hasType :
-    ∀ Γ e, Γ ⊢ e : _ → Γ ⊢ .Unaryr (.HasType _) e : Typ._Bool
+    ∀ Γ e t, Γ ⊢ e : t → Γ ⊢ .Unaryr (.HasType t) e : Typ._Bool
 
   | T_isVariant :
     ∀ Γ e, Γ ⊢ e : _ → Γ ⊢ .Unaryr (.IsVariant _ _) e : Typ._Bool
@@ -288,5 +288,8 @@ def array_elem_typ (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : ∀ e ∈ l,
   match h with
   | WfTm.T_array _ _ A h' => simp[ty_array_inv]; exact h' e he
 
+def ty_hasType_inv (e : Exp)(A : Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : Typ._Bool) : Γ ⊢ e : A :=
+  match h with
+  | WfTm.T_hasType _ _ _ h' => h'
 
 end typing
