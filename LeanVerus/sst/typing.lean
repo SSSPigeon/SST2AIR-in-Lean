@@ -85,7 +85,7 @@ inductive Lookup_field : List (String × Exp) → List Typ → String → Typ �
     Lookup_field fs tys field t → Lookup_field ((n, e) :: fs) (t' :: tys) field t
 
 
-inductive WfTm : context → Typ → Exp → Type
+inductive WfTm : context → Typ → Exp → Prop
   | T_bool :
     ∀ Γ b, Γ ⊢ Exp.Const (.Bool b) : Typ._Bool
 
@@ -271,25 +271,34 @@ lemma ty_var_inv (i : Nat)(h : Γ ⊢ .Var i : t) :  t = Γ[i]'(ty_var_withinbou
 --   match h with
 --   | WfTm.T_array _ _ A _ _ _ => ⟨A, PLift.up rfl⟩
 
-def ty_array_inv (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : { A : Typ // (t = .Array A) }:=
-  match h with
-  | WfTm.T_array _ _ A h' => ⟨A, rfl⟩
-
--- lemma ty_array_inv (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : ∃ A : Typ, t = .Array A :=
+-- def ty_array_inv (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : { A : Typ // (t = .Array A) }:=
 --   match h with
---   | WfTm.T_array _ _ A _ _ _ => ⟨A, rfl⟩
+--   | WfTm.T_array _ _ A h' => ⟨A, rfl⟩
 
--- noncomputable
--- def array_elem_typ (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : Typ :=
---   Classical.choose (ty_array_inv l h)
+lemma ty_array_inv (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : ∃ A : Typ, t = .Array A :=
+  match h with
+  | WfTm.T_array _ _ A _ => ⟨A, rfl⟩
 
-def array_elem_typ (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : ∀ e ∈ l, Γ ⊢ e : (ty_array_inv l h).1 := by
+noncomputable
+def array_elem_typ (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : Typ :=
+  Classical.choose (ty_array_inv l h)
+
+set_option pp.universes true
+
+def array_elem_typing (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : (∀ e ∈ l, Γ ⊢ e : array_elem_typ l h) := by
   intros e he
   match h with
-  | WfTm.T_array _ _ A h' => simp[ty_array_inv]; exact h' e he
+  | .T_array _ _ A h' =>
+    have : array_elem_typ l (WfTm.T_array Γ l A h') = A := by
+      have := (Classical.choose_spec (ty_array_inv l (WfTm.T_array Γ l A h'))).symm
+      injection this
+    rw[this]
+    --change WfTm.{u_1} Γ A e
+    --exact h' e he
+    sorry
 
-def ty_hasType_inv (e : Exp)(A : Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : Typ._Bool) : Γ ⊢ e : A :=
-  match h with
-  | WfTm.T_hasType _ _ _ h' => h'
+-- def ty_hasType_inv (e : Exp)(A : Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : Typ._Bool) : Γ ⊢ e : A :=
+--   match h with
+--   | WfTm.T_hasType _ _ _ h' => h'
 
 end typing
