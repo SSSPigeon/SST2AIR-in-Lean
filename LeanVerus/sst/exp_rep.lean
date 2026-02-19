@@ -32,10 +32,17 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
     cast_typ_interp (ty_var_inv i hty).symm (venv i (ty_var_withinbound i hty))
 
   | .ArrayLiteral es =>
-    -- let A: Typ :=
-    --   match (ty_array_inv es hty) with
-    --   | ⟨A, hA⟩ => sorry
-    sorry
+    let A: Typ := (ty_array_inv es hty).1
+    let hA : t = .Array A := (ty_array_inv es hty).2
+    cast_typ_interp ((ty_array_inv es hty).2).symm
+      (cast (interp_array A).symm
+        (es.attach.map (fun e : { x: Exp // x ∈ es } =>
+          have helem :  WfTm Γ A e.1 := by apply array_elem_typ; exact e.property
+          have : sizeOf e.val < 1 + sizeOf es := by
+            refine Nat.lt_add_left 1 ?_;
+            refine List.sizeOf_lt_of_mem ?_;
+            exact e.property
+          exp_rep Γ tenv venv A e.1 helem)))
 
   | .Unaryr op arg =>
     match op with
@@ -50,3 +57,4 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
 
 
   | _ => sorry
+termination_by sizeOf e

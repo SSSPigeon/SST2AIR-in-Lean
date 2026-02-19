@@ -70,7 +70,7 @@ structure pi_dom (t: ClosedTyp) where
 
 end preinterpretation
 
-def typ_interp (te : typ_env) (dom_aux : ClosedTyp → Type) (t : Typ) :=
+def typ_interp (te : typ_env) (dom_aux : ClosedTyp → Type) (t : Typ): Type :=
   domain dom_aux (typ_subst te t)
 
 section interp_results
@@ -94,6 +94,10 @@ def interp_float64 : typ_interp tenv dom_aux (Typ.Float 64) = UInt64 := by
 
 def interp_strslice : typ_interp tenv dom_aux Typ.StrSlice = String := by
   simp[typ_interp, typ_subst, domain]
+
+def interp_array (t : Typ) : typ_interp tenv dom_aux (Typ.Array t) = List (typ_interp tenv dom_aux t) := by
+  simp[typ_interp, typ_subst, domain]
+  congr
 
 end interp_results
 

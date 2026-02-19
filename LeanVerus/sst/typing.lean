@@ -107,7 +107,7 @@ inductive WfTm : context → Typ → Exp → Type
     Γ ⊢ .TupleCtor s l_exp : (.Tuple l_ty)
 
   | T_array :
-    ∀ Γ l A, ∀ e ∈ l, Γ ⊢ e : A → Γ ⊢ .ArrayLiteral l : .Array A
+    ∀ Γ l A, (∀ e ∈ l, Γ ⊢ e : A) → Γ ⊢ .ArrayLiteral l : .Array A
 
   | T_strslice :
     ∀ Γ s, Γ ⊢ Exp.Const (.StrSlice s) : .StrSlice
@@ -263,9 +263,6 @@ lemma ty_var_inv (i : Nat)(h : Γ ⊢ .Var i : t) :  t = Γ[i]'(ty_var_withinbou
       expose_names
       exact ih (WfTm.T_var Γ i A h_1)
 
--- | T_array :
---     ∀ Γ l A, ∀ e ∈ l, Γ ⊢ e : A → Γ ⊢ .ArrayLiteral l : .Array A
-
 -- def array_elem_typ (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : Typ :=
 --   match h with
 --   | WfTm.T_array _ _ A _ _ _ => A
@@ -276,7 +273,7 @@ lemma ty_var_inv (i : Nat)(h : Γ ⊢ .Var i : t) :  t = Γ[i]'(ty_var_withinbou
 
 def ty_array_inv (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : { A : Typ // (t = .Array A) }:=
   match h with
-  | WfTm.T_array _ _ A _ _ _ => ⟨A, rfl⟩
+  | WfTm.T_array _ _ A h' => ⟨A, rfl⟩
 
 -- lemma ty_array_inv (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : ∃ A : Typ, t = .Array A :=
 --   match h with
@@ -285,5 +282,11 @@ def ty_array_inv (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : { A : Typ // (
 -- noncomputable
 -- def array_elem_typ (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : Typ :=
 --   Classical.choose (ty_array_inv l h)
+
+def array_elem_typ (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : ∀ e ∈ l, Γ ⊢ e : (ty_array_inv l h).1 := by
+  intros e he
+  match h with
+  | WfTm.T_array _ _ A h' => simp[ty_array_inv]; exact h' e he
+
 
 end typing
