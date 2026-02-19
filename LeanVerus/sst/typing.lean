@@ -275,27 +275,29 @@ lemma ty_var_inv (i : Nat)(h : Γ ⊢ .Var i : t) :  t = Γ[i]'(ty_var_withinbou
 --   match h with
 --   | WfTm.T_array _ _ A h' => ⟨A, rfl⟩
 
-lemma ty_array_inv (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : ∃ A : Typ, t = .Array A :=
+-- set_option pp.universes true
+lemma ty_array_inv (l : List Exp)(h : WfTm.{u} Γ t (Exp.ArrayLiteral l)) : ∃ A : Typ, t = .Array A ∧ (∀ e ∈ l, WfTm.{u} Γ A e) :=
   match h with
-  | WfTm.T_array _ _ A _ => ⟨A, rfl⟩
+  | WfTm.T_array _ _ A h' =>
+    ⟨A, rfl, h'⟩
 
-noncomputable
-def array_elem_typ (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : Typ :=
-  Classical.choose (ty_array_inv l h)
+-- noncomputable
+-- def array_elem_typ (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : Typ :=
+--   Classical.choose (ty_array_inv l h)
 
-set_option pp.universes true
+-- set_option pp.universes true
 
-def array_elem_typing (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : (∀ e ∈ l, Γ ⊢ e : array_elem_typ l h) := by
-  intros e he
-  match h with
-  | .T_array _ _ A h' =>
-    have : array_elem_typ l (WfTm.T_array Γ l A h') = A := by
-      have := (Classical.choose_spec (ty_array_inv l (WfTm.T_array Γ l A h'))).symm
-      injection this
-    rw[this]
-    --change WfTm.{u_1} Γ A e
-    --exact h' e he
-    sorry
+-- def array_elem_typing (l : List Exp)(h : Γ ⊢ .ArrayLiteral l : t) : (∀ e ∈ l, Γ ⊢ e : array_elem_typ l h) := by
+--   intros e he
+--   match h with
+--   | .T_array _ _ A h' =>
+--     have : array_elem_typ l (WfTm.T_array Γ l A h') = A := by
+--       have := (Classical.choose_spec (ty_array_inv l (WfTm.T_array Γ l A h'))).symm
+--       injection this
+--     rw[this]
+--     --change WfTm.{u_1} Γ A e
+--     --exact h' e he
+--     sorry
 
 -- def ty_hasType_inv (e : Exp)(A : Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : Typ._Bool) : Γ ⊢ e : A :=
 --   match h with

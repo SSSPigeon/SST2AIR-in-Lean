@@ -10,7 +10,7 @@ variable (tenv : typ_env)  (dom_aux : ClosedTyp → Type)
 
 def val_vars tenv (Γ: context) dom_aux :=  (i : Nat) → (_ : i < Γ.length) → typ_interp tenv dom_aux Γ[i]
 
-
+noncomputable
 def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : Γ ⊢ e : t): typ_interp tenv dom_aux t:=
   match e with
   | .Const c =>
@@ -32,28 +32,17 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
     cast_typ_interp (ty_var_inv i hty).symm (venv i (ty_var_withinbound i hty))
 
   | .ArrayLiteral es =>
-    let A: Typ := array_elem_typ es hty
-    let hA : t = .Array A := by sorry
+    let A: Typ := Classical.choose (ty_array_inv es hty)
+    let hA : t = .Array A := (Classical.choose_spec (ty_array_inv es hty)).1
     cast_typ_interp hA.symm
       (cast (interp_array A).symm
         (es.attach.map (fun e : { x: Exp // x ∈ es } =>
-          have helem :  WfTm Γ A e.1 := by sorry
+          have helem :  WfTm Γ A e.1 := (Classical.choose_spec (ty_array_inv es hty)).2 e.1 e.2
           have : sizeOf e.val < 1 + sizeOf es := by
             refine Nat.lt_add_left 1 ?_;
             refine List.sizeOf_lt_of_mem ?_;
             exact e.property
           exp_rep Γ tenv venv A e.1 helem)))
-    -- let A: Typ := (ty_array_inv es hty).1
-    -- let hA : t = .Array A := (ty_array_inv es hty).2
-    -- cast_typ_interp ((ty_array_inv es hty).2).symm
-    --   (cast (interp_array A).symm
-    --     (es.attach.map (fun e : { x: Exp // x ∈ es } =>
-    --       have helem :  WfTm Γ A e.1 := by apply array_elem_typ; exact e.property
-    --       have : sizeOf e.val < 1 + sizeOf es := by
-    --         refine Nat.lt_add_left 1 ?_;
-    --         refine List.sizeOf_lt_of_mem ?_;
-    --         exact e.property
-    --       exp_rep Γ tenv venv A e.1 helem)))
 
   | .Unaryr op arg =>
     match op with
