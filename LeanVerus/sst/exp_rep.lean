@@ -50,9 +50,13 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
     | .Unbox t' => sorry
     | .IsVariant dt var => sorry
     | .Proj field => sorry
-    | .HasType t' => sorry
-      --cast_typ_interp (ty_hasType_inv e t' hty).symm interp_hasType
+    | .HasType t' =>
+      -- have : Γ ⊢ .Unaryr (.HasType t') arg : t := by sorry
+      have := ty_hasType_inv arg t' t hty
+      --decide this.2
 
+      --cast_typ_interp (ty_hasType_inv e t' hty).symm interp_hasType
+      sorry
   | .Unary op arg => sorry
 
 

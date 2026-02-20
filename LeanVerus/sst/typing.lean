@@ -14,11 +14,14 @@ scoped syntax:50 term:51 : judgment
 scoped syntax:50 term:51 " : " term:51 : judgment
 
 syntax:25 term:51 " ⊢" judgment:50 : term
+syntax:25 term:51 " ⊢.{" level "} " judgment:50 : term
 
 set_option hygiene false in
 macro_rules
   | `($Γ ⊢ $A:term) => `(WfTp $Γ $A)
   | `($Γ ⊢ $t:term : $A:term) => `(WfTm $Γ $A $t)
+  | `($Γ ⊢.{ $u } $t:term : $A:term) => `(WfTm.{ $u } $Γ $A $t)
+
 
 mutual
 /-- All types in the given context are well-formed. -/
@@ -217,6 +220,7 @@ inductive WfTm : context → Typ → Exp → Prop
     Lookup_field fields l_ty field A →
     Γ ⊢ .Unaryr (.Proj field) e : A
 
+
 variable {Γ : context} {e : Exp} {t : Typ}
 
 lemma ty_constbool_inv (b : Bool)(h : Γ ⊢ Exp.Const (.Bool b) : t) : t = Typ._Bool := by
@@ -276,7 +280,7 @@ lemma ty_var_inv (i : Nat)(h : Γ ⊢ .Var i : t) :  t = Γ[i]'(ty_var_withinbou
 --   | WfTm.T_array _ _ A h' => ⟨A, rfl⟩
 
 -- set_option pp.universes true
-lemma ty_array_inv (l : List Exp)(h : WfTm.{u} Γ t (Exp.ArrayLiteral l)) : ∃ A : Typ, t = .Array A ∧ (∀ e ∈ l, WfTm.{u} Γ A e) :=
+lemma ty_array_inv (l : List Exp)(h : Γ ⊢.{u} Exp.ArrayLiteral l : t) : ∃ A : Typ, t = .Array A ∧ (∀ e ∈ l, Γ ⊢.{u} e : A) :=
   match h with
   | WfTm.T_array _ _ A h' =>
     ⟨A, rfl, h'⟩
@@ -299,8 +303,8 @@ lemma ty_array_inv (l : List Exp)(h : WfTm.{u} Γ t (Exp.ArrayLiteral l)) : ∃ 
 --     --exact h' e he
 --     sorry
 
--- def ty_hasType_inv (e : Exp)(A : Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : Typ._Bool) : Γ ⊢ e : A :=
---   match h with
---   | WfTm.T_hasType _ _ _ h' => h'
+def ty_hasType_inv (e : Exp)(A B: Typ)(h : Γ ⊢.{u} .Unaryr (.HasType A) e : B) : B = ._Bool ∧ (Γ ⊢.{u} e : A) :=
+  match h with
+  | WfTm.T_hasType _ _ _ h' => ⟨ rfl, h' ⟩
 
 end typing

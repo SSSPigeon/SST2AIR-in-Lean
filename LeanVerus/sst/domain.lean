@@ -99,8 +99,7 @@ def interp_array (t : Typ) : typ_interp tenv dom_aux (Typ.Array t) = List (typ_i
   simp[typ_interp, typ_subst, domain]
   congr
 
-def interp_hasType : typ_interp tenv dom_aux (Typ._Bool) = Bool := by
-  simp[typ_interp, typ_subst, domain]
+
 
 end interp_results
 
