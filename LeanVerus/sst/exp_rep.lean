@@ -11,7 +11,7 @@ variable (tenv : typ_env)  (dom_aux : ClosedTyp → Type)
 def val_vars tenv (Γ: context) dom_aux :=  (i : Nat) → (_ : i < Γ.length) → typ_interp tenv dom_aux Γ[i]
 
 noncomputable
-def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : Γ ⊢ e : t): typ_interp tenv dom_aux t:=
+def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : Γ ⊢.{u} e : t): typ_interp tenv dom_aux t:=
   match e with
   | .Const c =>
     match c with
@@ -51,12 +51,8 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
     | .IsVariant dt var => sorry
     | .Proj field => sorry
     | .HasType t' =>
-      -- have : Γ ⊢ .Unaryr (.HasType t') arg : t := by sorry
-      have := ty_hasType_inv arg t' t hty
-      --decide this.2
+      cast_typ_interp (ty_hasType_inv arg t' t hty).symm (cast interp_bool.symm (Γ ⊢.{u} arg : t'))
 
-      --cast_typ_interp (ty_hasType_inv e t' hty).symm interp_hasType
-      sorry
   | .Unary op arg => sorry
 
 

@@ -15,7 +15,7 @@ inductive Error : Type where
 -- TODO: Consider choosing Option Type as the output type
 def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   match t with
-  | ⟨._Bool, _⟩ => Bool
+  | ⟨._Bool, _⟩ => Prop
   | ⟨.Int i, _⟩ =>
     match i with
     | IntRange.Int => Int
@@ -77,7 +77,7 @@ section interp_results
 
 variable {tenv : typ_env} {dom_aux : ClosedTyp → Type} {t1 t2 : Typ}
 
-def interp_bool : typ_interp tenv dom_aux Typ._Bool = Bool := by
+def interp_bool : typ_interp tenv dom_aux Typ._Bool = Prop := by
   simp[typ_interp, typ_subst, domain]
 
 def interp_int : typ_interp tenv dom_aux (Typ.Int .Int) = Int := by

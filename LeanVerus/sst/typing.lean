@@ -205,7 +205,7 @@ inductive WfTm : context → Typ → Exp → Prop
     ∀ Γ e A, Γ ⊢ e : .Decorated .Box A → Γ ⊢ .Unaryr (.Unbox A) e : A
 
   | T_hasType :
-    ∀ Γ e t, Γ ⊢ e : t → Γ ⊢ .Unaryr (.HasType t) e : Typ._Bool
+    ∀ Γ e t, Γ ⊢ .Unaryr (.HasType t) e : Typ._Bool
 
   | T_isVariant :
     ∀ Γ e, Γ ⊢ e : _ → Γ ⊢ .Unaryr (.IsVariant _ _) e : Typ._Bool
@@ -303,8 +303,8 @@ lemma ty_array_inv (l : List Exp)(h : Γ ⊢.{u} Exp.ArrayLiteral l : t) : ∃ A
 --     --exact h' e he
 --     sorry
 
-def ty_hasType_inv (e : Exp)(A B: Typ)(h : Γ ⊢.{u} .Unaryr (.HasType A) e : B) : B = ._Bool ∧ (Γ ⊢.{u} e : A) :=
+def ty_hasType_inv (e : Exp)(A B: Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : B) : B = ._Bool :=
   match h with
-  | WfTm.T_hasType _ _ _ h' => ⟨ rfl, h' ⟩
+  | WfTm.T_hasType _ _ h' => rfl
 
 end typing
