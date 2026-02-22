@@ -87,7 +87,11 @@ inductive Lookup_field : List (String × Exp) → List Typ → String → Typ �
       {field : String} {t' : Typ} :
     Lookup_field fs tys field t → Lookup_field ((n, e) :: fs) (t' :: tys) field t
 
+set_option pp.universes true
 
+#check Typ
+#check context
+#check Exp
 inductive WfTm : context → Typ → Exp → Prop
   | T_bool :
     ∀ Γ b, Γ ⊢ Exp.Const (.Bool b) : Typ._Bool
@@ -158,7 +162,7 @@ inductive WfTm : context → Typ → Exp → Prop
     Γ ⊢ .Binary (.Index _ _) a i : A
 
   | T_let :
-    ∀ Γ tys (l_ty : List Typ) l_exp body A, (_ : l_ty.length = l_exp.length) →
+    ∀ Γ (l_ty : List Typ) l_exp body A, (_ : l_ty.length = l_exp.length) →
     ∀ i, (_ : i ≥ 0 ∧ i < l_ty.length) → Γ ⊢ l_exp[i] : l_ty[i] →
     l_ty.reverse.append Γ ⊢ body : A → Γ ⊢ .Let l_ty l_exp body : A
 
@@ -279,8 +283,8 @@ lemma ty_var_inv (i : Nat)(h : Γ ⊢ .Var i : t) :  t = Γ[i]'(ty_var_withinbou
 --   match h with
 --   | WfTm.T_array _ _ A h' => ⟨A, rfl⟩
 
--- set_option pp.universes true
-lemma ty_array_inv (l : List Exp)(h : Γ ⊢.{u} Exp.ArrayLiteral l : t) : ∃ A : Typ, t = .Array A ∧ (∀ e ∈ l, Γ ⊢.{u} e : A) :=
+set_option pp.universes true
+lemma ty_array_inv (l : List Exp)(h : Γ ⊢ Exp.ArrayLiteral l : t) : ∃ A : Typ, t = .Array A ∧ (∀ e ∈ l, Γ ⊢ e : A) :=
   match h with
   | WfTm.T_array _ _ A h' =>
     ⟨A, rfl, h'⟩
@@ -303,8 +307,22 @@ lemma ty_array_inv (l : List Exp)(h : Γ ⊢.{u} Exp.ArrayLiteral l : t) : ∃ A
 --     --exact h' e he
 --     sorry
 
-def ty_hasType_inv (e : Exp)(A B: Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : B) : B = ._Bool :=
+lemma ty_hasType_inv (e : Exp)(A B: Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : B) : B = ._Bool :=
   match h with
   | WfTm.T_hasType _ _ h' => rfl
+
+lemma ty_not_inv (b : Exp) (h : Γ ⊢ .Unary .Not b : t) : t = ._Bool ∧ (Γ ⊢ b : t) :=
+  match h with
+  | WfTm.T_not _ _ h => ⟨ rfl, h ⟩
+
+-- lemma ty_floatToBits_inv (f : Exp) (h : Γ ⊢.{u} .Unary .FloatToBits f : t) : (Γ ⊢.{u} f : .Float 32) ∨ (Γ ⊢.{u} f : .Float 64) :=
+--   match h with
+--   | WfTm.T_floatToBits32 _ _ h => Or.inl h
+--   | WfTm.T_floatToBits64 _ _ h => Or.inr h
+
+-- def ty_floatToBits_inv (f : Exp) (h : Γ ⊢.{u} .Unary .FloatToBits f : t) : UInt32 :=
+--   match h with
+--   | WfTm.T_floatToBits32 _ _ h => Or.inl h
+--   | WfTm.T_floatToBits64 _ _ h => Or.inr h
 
 end typing
