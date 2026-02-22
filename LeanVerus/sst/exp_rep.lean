@@ -56,11 +56,16 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
   | .Unary op arg =>
     match op with
     | .Not =>
-      exp_rep Γ tenv venv t arg (ty_not_inv arg hty).2
+      let res_bool :=
+        cast_typ_interp
+          (ty_not_inv arg hty).1
+          (exp_rep Γ tenv venv t arg (ty_not_inv arg hty).2)
+        |> cast interp_bool
+      cast_typ_interp (ty_not_inv arg hty).1.symm (cast interp_bool.symm ¬res_bool)
+
     | .FloatToBits =>
       match arg with
       | _ => sorry
-
       -- match (ty_floatToBits_inv arg hty) with
       -- | Or.inl hl => sorry
       -- | Or.inr hr => sorry
@@ -68,7 +73,103 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
     | .Clip (range : IntRange) (truncate : Bool) => sorry
 
 
-  | .Binary (op : BinaryOp) (arg₁ : Exp) (arg₂ : Exp)=> sorry
+  | .Binary op arg₁ arg₂ =>
+    match op with
+    | .And =>
+      let l_bool :=
+        cast_typ_interp
+          (ty_and_inv arg₁ arg₂ hty).1
+          (exp_rep Γ tenv venv t arg₁ (ty_and_inv arg₁ arg₂ hty).2.1)
+        |> cast interp_bool
+      let r_bool :=
+        cast_typ_interp
+          (ty_and_inv arg₁ arg₂ hty).1
+          (exp_rep Γ tenv venv t arg₂ (ty_and_inv arg₁ arg₂ hty).2.2)
+        |> cast interp_bool
+      cast_typ_interp (ty_and_inv arg₁ arg₂ hty).1.symm (cast interp_bool.symm (l_bool ∧ r_bool))
+
+    | .Or =>
+      let l_bool :=
+        cast_typ_interp
+          (ty_or_inv arg₁ arg₂ hty).1
+          (exp_rep Γ tenv venv t arg₁ (ty_or_inv arg₁ arg₂ hty).2.1)
+        |> cast interp_bool
+      let r_bool :=
+        cast_typ_interp
+          (ty_or_inv arg₁ arg₂ hty).1
+          (exp_rep Γ tenv venv t arg₂ (ty_or_inv arg₁ arg₂ hty).2.2)
+        |> cast interp_bool
+      cast_typ_interp (ty_or_inv arg₁ arg₂ hty).1.symm (cast interp_bool.symm (l_bool ∨ r_bool))
+
+    | .Xor =>
+      let l_bool :=
+        cast_typ_interp
+          (ty_xor_inv arg₁ arg₂ hty).1
+          (exp_rep Γ tenv venv t arg₁ (ty_xor_inv arg₁ arg₂ hty).2.1)
+        |> cast interp_bool
+      let r_bool :=
+        cast_typ_interp
+          (ty_xor_inv arg₁ arg₂ hty).1
+          (exp_rep Γ tenv venv t arg₂ (ty_xor_inv arg₁ arg₂ hty).2.2)
+        |> cast interp_bool
+      cast_typ_interp (ty_xor_inv arg₁ arg₂ hty).1.symm (cast interp_bool.symm (Xor' l_bool r_bool))
+
+    | .Implies =>
+      let l_bool :=
+        cast_typ_interp
+          (ty_implies_inv arg₁ arg₂ hty).1
+          (exp_rep Γ tenv venv t arg₁ (ty_implies_inv arg₁ arg₂ hty).2.1)
+        |> cast interp_bool
+      let r_bool :=
+        cast_typ_interp
+          (ty_implies_inv arg₁ arg₂ hty).1
+          (exp_rep Γ tenv venv t arg₂ (ty_implies_inv arg₁ arg₂ hty).2.2)
+        |> cast interp_bool
+      cast_typ_interp (ty_implies_inv arg₁ arg₂ hty).1.symm (cast interp_bool.symm (l_bool → r_bool))
+
+    | .Inequality (op : InequalityOp) =>
+      let l_int :=
+        exp_rep Γ tenv venv (Typ.Int .Int) arg₁ (ty_ineq_inv arg₁ arg₂ op hty).2.1
+        |> cast interp_int
+      let r_int :=
+        exp_rep Γ tenv venv (Typ.Int .Int) arg₂ (ty_ineq_inv arg₁ arg₂ op hty).2.2
+        |> cast interp_int
+      let res :=
+        match op with
+        | .Le => l_int <= r_int
+        | .Ge => l_int >= r_int
+        | .Lt => l_int < r_int
+        | .Gt => l_int > r_int
+      cast_typ_interp (ty_ineq_inv arg₁ arg₂ op hty).1.symm (cast interp_bool.symm res)
+
+    | .Ne =>
+      let A: Typ := Classical.choose (ty_ne_inv arg₁ arg₂ hty).2
+      let hty₁ : Γ ⊢ arg₁ : A := (Classical.choose_spec (ty_ne_inv arg₁ arg₂ hty).2).1
+      let hty₂ : Γ ⊢ arg₂ : A := (Classical.choose_spec (ty_ne_inv arg₁ arg₂ hty).2).2
+      let rep₁ := exp_rep Γ tenv venv A arg₁ hty₁
+      let rep₂ := exp_rep Γ tenv venv A arg₂ hty₂
+      cast_typ_interp (ty_ne_inv arg₁ arg₂ hty).1.symm (cast interp_bool.symm (rep₁ = rep₂))
+
+    | .Eq m =>
+      let A: Typ := Classical.choose (ty_eq_inv arg₁ arg₂ m hty).2
+      let hty₁ : Γ ⊢ arg₁ : A := (Classical.choose_spec (ty_eq_inv arg₁ arg₂ m hty).2).1
+      let hty₂ : Γ ⊢ arg₂ : A := (Classical.choose_spec (ty_eq_inv arg₁ arg₂ m hty).2).2
+      let rep₁ := exp_rep Γ tenv venv A arg₁ hty₁
+      let rep₂ := exp_rep Γ tenv venv A arg₂ hty₂
+      cast_typ_interp (ty_eq_inv arg₁ arg₂ m hty).1.symm (cast interp_bool.symm (rep₁ = rep₂))
+
+    -- bound checking?
+    | .Index (ak : ArrayKind) =>
+      match ak with
+      | .Slice => sorry
+      | .Array => sorry
+
+    | .Arith op =>
+      match op with
+      | .Add => sorry
+      | _ => sorry
+    | .Bitwise (op : BitwiseOp) (mode : Mode) => sorry
+
   | .If c b₁ b₂ => sorry
   | .Let (tys : List Typ) (es : List Exp) (body : Exp) => sorry
   | .Quant (q : Quant) (var : Typ) (body : Exp) => sorry

@@ -47,9 +47,13 @@ deriving Repr, Inhabited, DecidableEq, Hashable
 
 /-- Arithmetic inequality operations. -/
 inductive InequalityOp
+  -- IntRange::Int <=
   | Le
+  -- IntRange::Int >=
   | Ge
+  -- IntRange::Int <
   | Lt
+  -- IntRange::Int >
   | Gt
 deriving Repr, Inhabited, DecidableEq, Hashable
 
@@ -97,26 +101,12 @@ inductive UnaryOpr where
   | HasType (t : Typ)
 deriving Repr, Inhabited, Hashable, DecidableEq
 
-inductive OverflowBehavior
-  /-- Return an int. This is the only value allowed in SST. -/
-  | Allow
-  /-- Truncate to the given range  -/
-  | Truncate (i : IntRange)
-  /-- Error if the result is outside the given range -/
-  | Error (i : IntRange)
-deriving Repr, Inhabited, DecidableEq, Hashable
 
 inductive ArrayKind
   | Array
   | Slice
 deriving Repr, Inhabited, DecidableEq, Hashable
 
-inductive BoundsCheck
-  /-- No bounds check necessary. This is the only value allowed in SST. -/
-  | Allow
-  /-- Perform a bounds check. -/
-  | Error
-deriving Repr, Inhabited, DecidableEq, Hashable
 
 /--
   Primitive binary operations.
@@ -142,14 +132,14 @@ inductive BinaryOp
   | Ne
   /-- Arithmetic inequality -/
   | Inequality (op : InequalityOp)
-  /-- Arithmetic operations. Overflow checking is done when `mode = Exec`. -/
-  | Arith (op : ArithOp) (ob : OverflowBehavior)
+  /-- Arithmetic operations. If it overflows, return an int. -/
+  | Arith (op : ArithOp)
   /-- Bitwise operations. Overflow checking is done when `mode = Exec`. -/
   | Bitwise (op : BitwiseOp) (mode : Mode)
   /-- Index into an array or slice, no bounds-checking.
     `verus_builtin::array_index` lowers to this.
     In SST, this can also be used as a Loc. -/
-  | Index (ak : ArrayKind) (bc : BoundsCheck)
+  | Index (ak : ArrayKind)
 deriving Repr, Inhabited, DecidableEq, Hashable
 
 inductive Quant where
