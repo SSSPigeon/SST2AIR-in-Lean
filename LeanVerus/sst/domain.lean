@@ -13,8 +13,7 @@ inductive TypeError : Type where
   | UninterpretedType
 
 inductive ExpError : Type where
-  | DivByZero
-  | Overflow
+  | RuntimeErr
 
 -- TODO: Consider choosing Option Type as the output type
 def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
@@ -22,7 +21,7 @@ def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   | ⟨._Bool, _⟩ => Prop
   | ⟨.Int i, _⟩ =>
     match i with
-    | IntRange.Int => Int ⊕ ExpError
+    | IntRange.Int => Int
     | IntRange.Nat => Nat
     | IntRange.U u => sorry
     | IntRange.I i => sorry
@@ -84,7 +83,7 @@ variable {tenv : typ_env} {dom_aux : ClosedTyp → Type} {t1 t2 : Typ}
 def interp_bool : typ_interp tenv dom_aux Typ._Bool = Prop := by
   simp[typ_interp, typ_subst, domain]
 
-def interp_int : typ_interp tenv dom_aux (Typ.Int .Int) = (Int ⊕ ExpError):= by
+def interp_int : typ_interp tenv dom_aux (Typ.Int .Int) = Int := by
   simp[typ_interp, typ_subst, domain]
 
 def interp_nat : typ_interp tenv dom_aux (Typ.Int .Nat) = Nat := by

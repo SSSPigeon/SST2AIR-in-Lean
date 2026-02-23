@@ -364,6 +364,12 @@ lemma ty_add_inv (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .Add) b
   | WfTm.T_arith_add_int _ _ _ h₁ h₂ => ⟨Or.inl rfl, h₁, h₂⟩
   | WfTm.T_arith_add_nat _ _ _ h₁ h₂ => ⟨Or.inr rfl, h₁, h₂⟩
 
+-- ∀ Γ c b₁ b₂ A, Γ ⊢ c : Typ._Bool → Γ ⊢ b₁ : A → Γ ⊢ b₂ : A →
+--     Γ ⊢ .If c b₁ b₂ : A
+
+lemma ty_if_inv (c b₁ b₂: Exp) (t : Typ) (h : Γ ⊢ .If c b₁ b₂ : t) : (Γ ⊢ c : Typ._Bool) ∧ (Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
+  match h with
+  | WfTm.T_if _ _ _ _ _ hc h₁ h₂ => ⟨ hc, h₁, h₂⟩
 
 -- lemma ty_floatToBits_inv (f : Exp) (h : Γ ⊢.{u} .Unary .FloatToBits f : t) : (Γ ⊢.{u} f : .Float 32) ∨ (Γ ⊢.{u} f : .Float 64) :=
 --   match h with
