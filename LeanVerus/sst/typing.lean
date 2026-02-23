@@ -147,19 +147,14 @@ inductive WfTm : context → Typ → Exp → Prop
     Γ ⊢ .Binary (.Inequality _) b₁ b₂ : Typ._Bool
 
   /-- TODO: Add more possibilities, e.g., Γ ⊢ b₁ : Float -/
-  | T_arith_int :
+  | T_arith_add_int :
     ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .Int → Γ ⊢ b₂ : .Int .Int →
-    Γ ⊢ .Binary (.Arith _) b₁ b₂ : .Int .Int
+    Γ ⊢ .Binary (.Arith .Add) b₁ b₂ : .Int .Int
 
-  | T_arith_nat :
+  | T_arith_add_nat :
     ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .Nat → Γ ⊢ b₂ : .Int .Nat →
-    Γ ⊢ .Binary (.Arith _) b₁ b₂ : .Int .Nat
+    Γ ⊢ .Binary (.Arith .Add) b₁ b₂ : .Int .Nat
 
-  -- If it doesn't overflow, return .USize
-  -- If it does, return .Int
-  | T_arith_usize :
-    ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .USize → Γ ⊢ b₂ : .Int .USize →
-    Γ ⊢ .Binary (.Arith _) b₁ b₂ : .Int .Int
 
   | T_bitwise :
     ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .Int → Γ ⊢ b₂ : .Int .Int →
@@ -344,15 +339,15 @@ lemma ty_implies_inv (b₁ b₂ : Exp) (h : Γ ⊢ .Binary .Implies b₁ b₂ : 
 
 lemma ty_ineq_inv (b₁ b₂ : Exp)(op : InequalityOp) (h : Γ ⊢ .Binary (.Inequality op) b₁ b₂ : t) : t = ._Bool ∧ (Γ ⊢ b₁ : Typ.Int .Int) ∧ (Γ ⊢ b₂ : Typ.Int .Int) :=
   match h with
-  | WfTm.T_ineq Γ _ _ h₁ h₂ => ⟨ rfl, h₁, h₂ ⟩
+  | WfTm.T_ineq _ _ _ h₁ h₂ => ⟨ rfl, h₁, h₂ ⟩
 
 lemma ty_ne_inv (b₁ b₂ : Exp)(h : Γ ⊢ .Binary .Ne b₁ b₂ : t) : t = ._Bool ∧  ∃ A, (Γ ⊢ b₁ : A) ∧ (Γ ⊢ b₂ : A) :=
   match h with
-  | WfTm.T_ne Γ _ _ A h₁ h₂ => ⟨ rfl, A, h₁, h₂ ⟩
+  | WfTm.T_ne _ _ _ A h₁ h₂ => ⟨ rfl, A, h₁, h₂ ⟩
 
 lemma ty_eq_inv (b₁ b₂ : Exp)(m : Mode) (h : Γ ⊢ .Binary (.Eq m) b₁ b₂ : t) : t = ._Bool ∧ ∃ A, (Γ ⊢ b₁ : A) ∧ (Γ ⊢ b₂ : A) :=
   match h with
-  | WfTm.T_eq Γ _ _ A h₁ h₂ => ⟨ rfl, A, h₁, h₂ ⟩
+  | WfTm.T_eq _ _ _ A h₁ h₂ => ⟨ rfl, A, h₁, h₂ ⟩
 
 lemma ty_index_array_inv (a i : Exp)(t : Typ)(h : Γ ⊢ .Binary (.Index .Array) a i : t): (Γ ⊢ a : .Array t) ∧ (Γ ⊢ i : .Int .Int) :=
   match h with
@@ -361,6 +356,14 @@ lemma ty_index_array_inv (a i : Exp)(t : Typ)(h : Γ ⊢ .Binary (.Index .Array)
 lemma ty_index_slice_inv (s i : Exp)(t : Typ)(h : Γ ⊢ .Binary (.Index .Slice) s i : t): t = .Int .Char ∧ (Γ ⊢ s : .StrSlice) ∧ (Γ ⊢ i : .Int .Int) :=
   match h with
   | WfTm.T_index_slice _ _ _ h₁ h₂ => ⟨ rfl, h₁, h₂ ⟩
+
+lemma ty_add_inv (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .Add) b₁ b₂ : t):
+(t = .Int .Int ∨ t = .Int .Nat) ∧
+(Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
+  match h with
+  | WfTm.T_arith_add_int _ _ _ h₁ h₂ => ⟨Or.inl rfl, h₁, h₂⟩
+  | WfTm.T_arith_add_nat _ _ _ h₁ h₂ => ⟨Or.inr rfl, h₁, h₂⟩
+
 
 -- lemma ty_floatToBits_inv (f : Exp) (h : Γ ⊢.{u} .Unary .FloatToBits f : t) : (Γ ⊢.{u} f : .Float 32) ∨ (Γ ⊢.{u} f : .Float 64) :=
 --   match h with

@@ -9,7 +9,12 @@ def arg_list (domain: ClosedTyp → Type) := hlist domain
 
 section preinterpretation
 
-inductive Error : Type where
+/--
+Γ ⊢ e₁ : int  Γ ⊢ e₂ : int
+------------------------------
+Γ ⊢ Div(e₁, e₂) : ?
+-/
+inductive TypeError : Type where
   | UninterpretedType
 
 -- TODO: Consider choosing Option Type as the output type
@@ -28,7 +33,7 @@ def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   | ⟨.Float w, _⟩ =>
     if w = 32 then UInt32
     else if w = 64 then UInt64
-    else Error
+    else TypeError
   | ⟨.TypParam p, h⟩ =>
     False.elim <|
     show False from by
@@ -81,6 +86,9 @@ def interp_bool : typ_interp tenv dom_aux Typ._Bool = Prop := by
   simp[typ_interp, typ_subst, domain]
 
 def interp_int : typ_interp tenv dom_aux (Typ.Int .Int) = Int := by
+  simp[typ_interp, typ_subst, domain]
+
+def interp_nat : typ_interp tenv dom_aux (Typ.Int .Nat) = Nat := by
   simp[typ_interp, typ_subst, domain]
 
 def interp_char : typ_interp tenv dom_aux (Typ.Int .Char) = Char := by

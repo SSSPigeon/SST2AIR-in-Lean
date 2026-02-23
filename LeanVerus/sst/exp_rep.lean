@@ -166,7 +166,25 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
 
     | .Arith op =>
       match op with
-      | .Add => sorry
+      | .Add =>
+        match t with
+        | .Int .Int =>
+          let l_int :=
+            exp_rep Γ tenv venv (Typ.Int .Int) arg₁ (ty_add_inv arg₁ arg₂ (.Int .Int) hty).2.1
+            |> cast interp_int
+          let r_int :=
+            exp_rep Γ tenv venv (Typ.Int .Int) arg₂ (ty_add_inv arg₁ arg₂ (.Int .Int) hty).2.2
+            |> cast interp_int
+          cast interp_int.symm (l_int + r_int)
+        | .Int .Nat =>
+          let l_nat :=
+            exp_rep Γ tenv venv (Typ.Int .Nat) arg₁ (ty_add_inv arg₁ arg₂ (.Int .Nat) hty).2.1
+            |> cast interp_nat
+          let r_nat :=
+            exp_rep Γ tenv venv (Typ.Int .Nat) arg₂ (ty_add_inv arg₁ arg₂ (.Int .Nat) hty).2.2
+            |> cast interp_nat
+          cast interp_nat.symm (l_nat + r_nat)
+        | _ => sorry
       | _ => sorry
     | .Bitwise (op : BitwiseOp) (mode : Mode) => sorry
 

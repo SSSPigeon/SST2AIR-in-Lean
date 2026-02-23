@@ -132,7 +132,7 @@ inductive BinaryOp
   | Ne
   /-- Arithmetic inequality -/
   | Inequality (op : InequalityOp)
-  /-- Arithmetic operations. If it overflows, return an int. -/
+  /-- Arithmetic operations. -/
   | Arith (op : ArithOp)
   /-- Bitwise operations. Overflow checking is done when `mode = Exec`. -/
   | Bitwise (op : BitwiseOp) (mode : Mode)
