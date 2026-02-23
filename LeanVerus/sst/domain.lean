@@ -9,13 +9,12 @@ def arg_list (domain: ClosedTyp → Type) := hlist domain
 
 section preinterpretation
 
-/--
-Γ ⊢ e₁ : int  Γ ⊢ e₂ : int
-------------------------------
-Γ ⊢ Div(e₁, e₂) : ?
--/
 inductive TypeError : Type where
   | UninterpretedType
+
+inductive ExpError : Type where
+  | DivByZero
+  | Overflow
 
 -- TODO: Consider choosing Option Type as the output type
 def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
@@ -23,7 +22,7 @@ def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   | ⟨._Bool, _⟩ => Prop
   | ⟨.Int i, _⟩ =>
     match i with
-    | IntRange.Int => Int
+    | IntRange.Int => Int ⊕ ExpError
     | IntRange.Nat => Nat
     | IntRange.U u => sorry
     | IntRange.I i => sorry
@@ -85,7 +84,7 @@ variable {tenv : typ_env} {dom_aux : ClosedTyp → Type} {t1 t2 : Typ}
 def interp_bool : typ_interp tenv dom_aux Typ._Bool = Prop := by
   simp[typ_interp, typ_subst, domain]
 
-def interp_int : typ_interp tenv dom_aux (Typ.Int .Int) = Int := by
+def interp_int : typ_interp tenv dom_aux (Typ.Int .Int) = (Int ⊕ ExpError):= by
   simp[typ_interp, typ_subst, domain]
 
 def interp_nat : typ_interp tenv dom_aux (Typ.Int .Nat) = Nat := by
