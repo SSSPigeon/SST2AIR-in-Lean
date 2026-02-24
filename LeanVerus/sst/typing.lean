@@ -314,11 +314,6 @@ lemma ty_array_inv (l : List Exp)(h : Γ ⊢ Exp.ArrayLiteral l : t) : ∃ A : T
 --     --exact h' e he
 --     sorry
 
--- lemma ty_hasType_inv (e : Exp)(A B: Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : B) : B = ._Bool :=
---   match h with
---   | WfTm.T_hasType _ _ h' => rfl
-
-
 lemma ty_hasType_inv (e : Exp)(A B: Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : B) : B = ._Bool ∧ ∃ C, Γ ⊢ e : C:=
   match h with
   | WfTm.T_hasType _ _ _ C _ h' => ⟨ rfl, C, h' ⟩

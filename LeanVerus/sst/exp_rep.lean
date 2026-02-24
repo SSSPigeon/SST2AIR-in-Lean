@@ -64,8 +64,13 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
 --exp_rep Γ tenv venv A e.1 helem
   | .Unaryr op arg =>
     match op with
-    | .HasType t' => sorry
-      -- cast_typ_interp (ty_hasType_inv arg t' t hty).symm (cast interp_bool.symm (Γ ⊢ arg : t'))
+    | .HasType t' =>
+      let A: Typ := Classical.choose (ty_hasType_inv arg t' t hty).2
+      let hA := Classical.choose_spec (ty_hasType_inv arg t' t hty).2
+      match (exp_rep Γ tenv venv A arg hA) with
+      | .inl _ =>
+        cast_typ_interp (ty_hasType_inv arg t' t hty).1.symm (cast interp_bool.symm (typ_subst tenv A = typ_subst tenv t')) |> .inl
+      | .inr e => .inr e
     | .Box t' => sorry
     | .Unbox t' => sorry
     | .IsVariant dt var => sorry
