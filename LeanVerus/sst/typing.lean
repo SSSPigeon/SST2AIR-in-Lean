@@ -217,7 +217,8 @@ inductive WfTm : context → Typ → Exp → Prop
     ∀ Γ e A, Γ ⊢ e : .Decorated .Box A → Γ ⊢ .Unaryr (.Unbox A) e : A
 
   | T_hasType :
-    ∀ Γ e t, Γ ⊢ .Unaryr (.HasType t) e : Typ._Bool
+    ∀ Γ e t t', Γ ⊢ t → Γ ⊢ e : t' →
+    Γ ⊢ .Unaryr (.HasType t) e : Typ._Bool
 
   | T_isVariant :
     ∀ Γ e, Γ ⊢ e : _ → Γ ⊢ .Unaryr (.IsVariant _ _) e : Typ._Bool
@@ -313,9 +314,14 @@ lemma ty_array_inv (l : List Exp)(h : Γ ⊢ Exp.ArrayLiteral l : t) : ∃ A : T
 --     --exact h' e he
 --     sorry
 
-lemma ty_hasType_inv (e : Exp)(A B: Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : B) : B = ._Bool :=
+-- lemma ty_hasType_inv (e : Exp)(A B: Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : B) : B = ._Bool :=
+--   match h with
+--   | WfTm.T_hasType _ _ h' => rfl
+
+
+lemma ty_hasType_inv (e : Exp)(A B: Typ)(h : Γ ⊢ .Unaryr (.HasType A) e : B) : B = ._Bool ∧ ∃ C, Γ ⊢ e : C:=
   match h with
-  | WfTm.T_hasType _ _ h' => rfl
+  | WfTm.T_hasType _ _ _ C _ h' => ⟨ rfl, C, h' ⟩
 
 lemma ty_not_inv (b : Exp) (h : Γ ⊢ .Unary .Not b : t) : t = ._Bool ∧ (Γ ⊢ b : t) :=
   match h with

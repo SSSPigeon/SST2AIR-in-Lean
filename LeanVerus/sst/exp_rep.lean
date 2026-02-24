@@ -217,8 +217,9 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
     let b₂_res := exp_rep Γ tenv venv t b₂ (ty_if_inv c b₁ b₂ t hty).2.2
     match c_res, b₁_res, b₂_res with
     | .inl c', .inl b₁', .inl b₂' =>
-      let c_bool := cast interp_bool c'
-      --if c_bool then b₁' else b₂'
+      let c_prop := cast interp_bool c'
+
+      --if c_prop then b₁' else b₂'
       sorry
     | .inr e, _, _ | _, .inr e, _ | _, _, .inr e => .inr e
   | .Let (tys : List Typ) (es : List Exp) (body : Exp) => sorry
