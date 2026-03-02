@@ -201,25 +201,25 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
         | _ => sorry
 
       | .EuclideanDiv =>
-        let t_arg :=
-        match (ty_div_inv arg₁ arg₂ t hty).2 with
-        | Or.inl ⟨h₁, _⟩ => extract_typ h₁
-          -- let l_int :=
-          --   exp_rep Γ tenv venv (Typ.Int .Int) arg₁ h₁
-          --   |> cast interp_int
-          -- let r_int :=
-          --   exp_rep Γ tenv venv (Typ.Int .Int) arg₂ h₂
-          --   |> cast interp_int
-          -- cast_typ_interp (ty_div_inv arg₁ arg₂ t hty).1.symm (cast interp_int.symm (div_totalized_int l_int r_int))
-        | Or.inr ⟨h₁, _⟩ => extract_typ h₁
-          -- let l_nat :=
-          --   exp_rep Γ tenv venv (Typ.Int .Nat) arg₁ h₁
-          --   |> cast interp_nat
-          -- let r_nat :=
-          --   exp_rep Γ tenv venv (Typ.Int .Nat) arg₂ h₂
-          --   |> cast interp_nat
-          -- cast_typ_interp (ty_div_inv arg₁ arg₂ t hty).1.symm (cast interp_int.symm (div_totalized_int l_nat r_nat))
-        sorry
+        match t with
+        | .Int .Int =>
+          let l_int :=
+            exp_rep Γ tenv venv (Typ.Int .Int) arg₁ (ty_div_inv arg₁ arg₂ (.Int .Int) hty).2.1
+            |> cast interp_int
+          let r_int :=
+            exp_rep Γ tenv venv (Typ.Int .Int) arg₂ (ty_div_inv arg₁ arg₂ (.Int .Int) hty).2.2
+            |> cast interp_int
+          cast interp_int.symm (div_totalized_int l_int r_int)
+        | .Int .Nat =>
+          let l_nat :=
+            exp_rep Γ tenv venv (Typ.Int .Nat) arg₁ (ty_div_inv arg₁ arg₂ (.Int .Nat) hty).2.1
+            |> cast interp_nat
+          let r_nat :=
+            exp_rep Γ tenv venv (Typ.Int .Nat) arg₂ (ty_div_inv arg₁ arg₂ (.Int .Nat) hty).2.2
+            |> cast interp_nat
+          sorry
+          -- cast interp_nat.symm (div_totalized_nat l_nat r_nat)
+        | _ => sorry
       | _ => sorry
     | .Bitwise (op : BitwiseOp) (mode : Mode) => sorry
 
