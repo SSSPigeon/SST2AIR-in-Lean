@@ -117,11 +117,3 @@ def cast_typ_interp {te : typ_env} {dom_aux : ClosedTyp → Type} {t1 t2 : Typ} 
   | rfl => e
 
 end casting
-
-#check Classical.propDecidable
-
-open Classical in
-noncomputable def prop_to_bool : Prop → Bool :=
-  fun p ↦
-    --have := Classical.propDecidable p
-    if p then true else false

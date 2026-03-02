@@ -155,6 +155,22 @@ inductive WfTm : context → Typ → Exp → Prop
     ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .Nat → Γ ⊢ b₂ : .Int .Nat →
     Γ ⊢ .Binary (.Arith .Add) b₁ b₂ : .Int .Nat
 
+  | T_arith_div_int :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .Int → Γ ⊢ b₂ : .Int .Int →
+    Γ ⊢ .Binary (.Arith .EuclideanDiv) b₁ b₂ : .Int .Int
+
+  | T_arith_div_nat :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .Nat → Γ ⊢ b₂ : .Int .Nat →
+    Γ ⊢ .Binary (.Arith .EuclideanDiv) b₁ b₂ : .Int .Int
+
+  | T_arith_mod_int :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .Int → Γ ⊢ b₂ : .Int .Int →
+    Γ ⊢ .Binary (.Arith .EuclideanMod) b₁ b₂ : .Int .Int
+
+  -- TODO: Obsidian
+  | T_arith_mod_nat :
+    ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .Nat → Γ ⊢ b₂ : .Int .Nat →
+    Γ ⊢ .Binary (.Arith .EuclideanMod) b₁ b₂ : .Int .Int
 
   | T_bitwise :
     ∀ Γ b₁ b₂, Γ ⊢ b₁ : .Int .Int → Γ ⊢ b₂ : .Int .Int →
@@ -235,6 +251,10 @@ inductive WfTm : context → Typ → Exp → Prop
 
 
 variable {Γ : context} {e : Exp} {t : Typ}
+
+def extract_typ (_ : Γ ⊢ e : t) := t
+
+lemma extract_iso (h : Γ ⊢ e : t) : Γ ⊢ e : extract_typ h := by simp[extract_typ]; exact h
 
 lemma ty_constbool_inv (b : Bool)(h : Γ ⊢ Exp.Const (.Bool b) : t) : t = Typ._Bool := by
   match h with
@@ -365,8 +385,19 @@ lemma ty_add_inv (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .Add) b
   | WfTm.T_arith_add_int _ _ _ h₁ h₂ => ⟨Or.inl rfl, h₁, h₂⟩
   | WfTm.T_arith_add_nat _ _ _ h₁ h₂ => ⟨Or.inr rfl, h₁, h₂⟩
 
--- ∀ Γ c b₁ b₂ A, Γ ⊢ c : Typ._Bool → Γ ⊢ b₁ : A → Γ ⊢ b₂ : A →
---     Γ ⊢ .If c b₁ b₂ : A
+lemma ty_div_inv (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .EuclideanDiv) b₁ b₂ : t):
+t = .Int .Int ∧
+(((Γ ⊢ b₁ : .Int .Int) ∧ (Γ ⊢ b₂ : .Int .Int)) ∨ ((Γ ⊢ b₁ : .Int .Nat) ∧ (Γ ⊢ b₂ : .Int .Nat))) :=
+  match h with
+  | WfTm.T_arith_div_int _ _ _ h₁ h₂ => ⟨rfl, Or.inl ⟨h₁, h₂⟩⟩
+  | WfTm.T_arith_div_nat _ _ _ h₁ h₂ => ⟨rfl, Or.inr ⟨h₁, h₂⟩⟩
+
+lemma ty_mod_inv (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .EuclideanMod) b₁ b₂ : t):
+t = .Int .Int ∧
+(((Γ ⊢ b₁ : .Int .Int) ∧ (Γ ⊢ b₂ : .Int .Int)) ∨ ((Γ ⊢ b₁ : .Int .Nat) ∧ (Γ ⊢ b₂ : .Int .Nat))) :=
+  match h with
+  | WfTm.T_arith_mod_int _ _ _ h₁ h₂ => ⟨rfl, Or.inl ⟨h₁, h₂⟩⟩
+  | WfTm.T_arith_mod_nat _ _ _ h₁ h₂ => ⟨rfl, Or.inr ⟨h₁, h₂⟩⟩
 
 lemma ty_if_inv (c b₁ b₂: Exp) (t : Typ) (h : Γ ⊢ .If c b₁ b₂ : t) : (Γ ⊢ c : Typ._Bool) ∧ (Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
   match h with
