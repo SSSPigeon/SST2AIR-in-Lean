@@ -42,26 +42,20 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
   | .ArrayLiteral es =>
     let A: Typ := Classical.choose (ty_array_inv es hty)
     let hA : t = .Array A := (Classical.choose_spec (ty_array_inv es hty)).1
-    --cast_typ_interp hA.symm
-
-    --cast (interp_array A).symm
+    -- (fun e ls =>
+    --   match e with
+    --   | none => .inr .RuntimeErr
+    --   | some e' => e' :: ls) []
     let res :=
-      (es.attach.map (fun e : { x: Exp // x ∈ es } =>
+      es.attach.map (fun e : { x: Exp // x ∈ es } =>
         have helem :  WfTm Γ A e.1 := (Classical.choose_spec (ty_array_inv es hty)).2 e.1 e.2
         have : sizeOf e.val < 1 + sizeOf es := by
           refine Nat.lt_add_left 1 ?_;
           refine List.sizeOf_lt_of_mem ?_;
           exact e.property
-        match (exp_rep Γ tenv venv A e.1 helem) with
-        | .inl r => some r
-        | .inr _ => none))
-    res.foldr
-      (fun e ls =>
-        match e with
-        | none => .inr .RuntimeErr
-        | some e' => e' :: ls) []
+        exp_rep Γ tenv venv A e.1 helem)
+    let f : List (typ_interp tenv dom_aux A ⊕ ExpError) → List (typ_interp tenv dom_aux A) ⊕ ExpError := sorry
     sorry
---exp_rep Γ tenv venv A e.1 helem
   | .Unaryr op arg =>
     match op with
     | .HasType t' =>
@@ -69,7 +63,7 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
       let hA := Classical.choose_spec (ty_hasType_inv arg t' t hty).2
       match (exp_rep Γ tenv venv A arg hA) with
       | .inl _ =>
-        cast_typ_interp (ty_hasType_inv arg t' t hty).1.symm (cast interp_bool.symm (typ_subst tenv A = typ_subst tenv t')) |> .inl
+        cast_typ_interp (ty_hasType_inv arg t' t hty).1.symm (cast interp_bool.symm ((typ_subst tenv A).1 = (typ_subst tenv t').1)) |> .inl
       | .inr e => .inr e
     | .Box t' => sorry
     | .Unbox t' => sorry
@@ -171,8 +165,8 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
       let hty₁ : Γ ⊢ arg₁ : A := (Classical.choose_spec (ty_ne_inv arg₁ arg₂ hty).2).1
       let hty₂ : Γ ⊢ arg₂ : A := (Classical.choose_spec (ty_ne_inv arg₁ arg₂ hty).2).2
       match (exp_rep Γ tenv venv A arg₁ hty₁), (exp_rep Γ tenv venv A arg₂ hty₂) with
-      | .inl r₁, .inl r₂ =>
-        cast_typ_interp (ty_ne_inv arg₁ arg₂ hty).1.symm (cast interp_bool.symm (r₁ ≠ r₂)) |> .inl
+      | .inl r₁, .inl r₂ => sorry
+        --cast_typ_interp (ty_ne_inv arg₁ arg₂ hty).1.symm (cast interp_bool.symm (r₁ ≠ r₂)) |> .inl
       | .inl _, .inr e | .inr e, .inl _ | .inr e, .inr _ => .inr e
 
     | .Eq m =>
@@ -180,8 +174,8 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
       let hty₁ : Γ ⊢ arg₁ : A := (Classical.choose_spec (ty_eq_inv arg₁ arg₂ m hty).2).1
       let hty₂ : Γ ⊢ arg₂ : A := (Classical.choose_spec (ty_eq_inv arg₁ arg₂ m hty).2).2
       match (exp_rep Γ tenv venv A arg₁ hty₁), (exp_rep Γ tenv venv A arg₂ hty₂) with
-      | .inl r₁, .inl r₂ =>
-        cast_typ_interp (ty_eq_inv arg₁ arg₂ m hty).1.symm (cast interp_bool.symm (r₁ = r₂)) |> .inl
+      | .inl r₁, .inl r₂ => sorry
+        -- cast_typ_interp (ty_eq_inv arg₁ arg₂ m hty).1.symm (cast interp_bool.symm (r₁ = r₂)) |> .inl
       | .inl _, .inr e | .inr e, .inl _ | .inr e, .inr _ => .inr e
 
     -- bound checking?
@@ -222,10 +216,8 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
     let b₂_res := exp_rep Γ tenv venv t b₂ (ty_if_inv c b₁ b₂ t hty).2.2
     match c_res, b₁_res, b₂_res with
     | .inl c', .inl b₁', .inl b₂' =>
-      let c_prop := cast interp_bool c'
-
-      --if c_prop then b₁' else b₂'
-      sorry
+      let c_bool := cast interp_bool c'
+      (if c_bool then b₁' else b₂') |> .inl
     | .inr e, _, _ | _, .inr e, _ | _, _, .inr e => .inr e
   | .Let (tys : List Typ) (es : List Exp) (body : Exp) => sorry
   | .Quant (q : Quant) (var : Typ) (body : Exp) => sorry

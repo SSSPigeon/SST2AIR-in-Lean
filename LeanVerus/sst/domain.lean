@@ -18,7 +18,7 @@ inductive ExpError : Type where
 -- TODO: Consider choosing Option Type as the output type
 def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   match t with
-  | ⟨._Bool, _⟩ => Prop
+  | ⟨._Bool, _⟩ => Bool
   | ⟨.Int i, _⟩ =>
     match i with
     | IntRange.Int => Int
@@ -80,7 +80,7 @@ section interp_results
 
 variable {tenv : typ_env} {dom_aux : ClosedTyp → Type} {t1 t2 : Typ}
 
-def interp_bool : typ_interp tenv dom_aux Typ._Bool = Prop := by
+def interp_bool : typ_interp tenv dom_aux Typ._Bool = Bool := by
   simp[typ_interp, typ_subst, domain]
 
 def interp_int : typ_interp tenv dom_aux (Typ.Int .Int) = Int := by
@@ -117,3 +117,11 @@ def cast_typ_interp {te : typ_env} {dom_aux : ClosedTyp → Type} {t1 t2 : Typ} 
   | rfl => e
 
 end casting
+
+#check Classical.propDecidable
+
+open Classical in
+noncomputable def prop_to_bool : Prop → Bool :=
+  fun p ↦
+    --have := Classical.propDecidable p
+    if p then true else false
