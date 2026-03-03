@@ -197,8 +197,11 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
             |> cast interp_nat
           cast interp_nat.symm (l_nat + r_nat)
 
-        -- TODO: How to say this is impossible?
-        | _ => sorry
+        | .Int (.U _) | .Int (.I _) | .Int .Char | .Int .USize | .Int .ISize
+        | .Float _ | .Array _ | .StrSlice | .TypParam _
+        | .SpecFn _ _ | .Decorated _ _ | .Tuple _ | .Struct _ _
+        | .Enum _ _ | .AnonymousClosure _ _ | .FnDef _ _ | .AirNamed _ => nomatch hty
+
 
       | .EuclideanDiv =>
         match t with
@@ -219,7 +222,12 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
             |> cast interp_nat
           sorry
           -- cast interp_nat.symm (div_totalized_nat l_nat r_nat)
-        | _ => sorry
+        | .Int (.U _) | .Int (.I _) | .Int .Char | .Int .USize | .Int .ISize
+        | .Float _ | .Array _ | .StrSlice | .TypParam _
+        | .SpecFn _ _ | .Decorated _ _ | .Tuple _ | .Struct _ _
+        | .Enum _ _ | .AnonymousClosure _ _ | .FnDef _ _ | .AirNamed _ => nomatch hty
+
+
       | _ => sorry
     | .Bitwise (op : BitwiseOp) (mode : Mode) => sorry
 
