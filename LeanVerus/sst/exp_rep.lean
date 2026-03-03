@@ -15,6 +15,7 @@ axiom div_zero_unspecified_value : Int → Int
 noncomputable def div_totalized_int (x y : Int) : Int :=
   if y = 0 then div_zero_unspecified_value x else x / y
 
+-- TODO: Ask Amar
 noncomputable def div_totalized_nat (x y : Nat) : Int :=
   if y = 0 then div_zero_unspecified_value x else x / y
 
@@ -74,13 +75,9 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
         |> cast interp_bool
       cast_typ_interp (ty_not_inv arg hty).1.symm (cast interp_bool.symm ¬res_bool)
 
-    -- TODO: finish this
-    | .FloatToBits =>
-      match arg with
-      | _ => sorry
-      -- match (ty_floatToBits_inv arg hty) with
-      -- | Or.inl hl => sorry
-      -- | Or.inr hr => sorry
+    -- TODO: Ask Wojciech
+    | .FloatToBits => sorry
+
     | .BitNot (width : Option Nat) => sorry
     | .Clip (range : IntRange) (truncate : Bool) => sorry
 
@@ -170,10 +167,19 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
       let rep₂ := exp_rep Γ tenv venv A arg₂ hty₂
       cast_typ_interp (ty_eq_inv arg₁ arg₂ m hty).1.symm (cast interp_bool.symm (@Decidable.decide (rep₁ = rep₂) (Classical.propDecidable (rep₁ = rep₂))))
 
-    -- TODO: look at ARRAY_INDEX in ast examples.
+    -- In air : array_index_get
     | .Index (ak : ArrayKind) =>
       match ak with
-      | .Array => sorry
+      | .Array =>
+        let htya := (ty_index_array_inv arg₁ arg₂ t hty).1
+        let htyi := (ty_index_array_inv arg₁ arg₂ t hty).2
+        let rep_a := exp_rep Γ tenv venv (.Array t) arg₁ htya
+        let rep_i := exp_rep Γ tenv venv (.Int .Nat) arg₂ htyi
+        let rep_a' := cast (interp_array t) rep_a
+        let rep_i' := cast interp_nat rep_i
+        let res := rep_a'[rep_i']?
+        -- TODO
+        sorry
       | .Slice => sorry
 
 
@@ -221,6 +227,7 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
           let r_nat :=
             exp_rep Γ tenv venv (Typ.Int .Nat) arg₂ (ty_div_inv arg₁ arg₂ (.Int .Nat) hty).2.2
             |> cast interp_nat
+          -- TODO
           sorry
           -- cast interp_nat.symm (div_totalized_nat l_nat r_nat)
         | .Int (.U _) | .Int (.I _) | .Int .Char | .Int .USize | .Int .ISize

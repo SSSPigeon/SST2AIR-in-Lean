@@ -175,7 +175,7 @@ inductive WfTm : context → Typ → Exp → Prop
 
   /--TODO: Can i be of other types, like usize? -/
   | T_index_array :
-    ∀ Γ a i A, Γ ⊢ a : .Array A → Γ ⊢ i : .Int .Int →
+    ∀ Γ a i A, Γ ⊢ a : .Array A → Γ ⊢ i : .Int .Nat →
     Γ ⊢ .Binary (.Index .Array) a i : A
 
   | T_index_slice :
@@ -363,7 +363,7 @@ lemma ty_eq_inv (b₁ b₂ : Exp)(m : Mode) (h : Γ ⊢ .Binary (.Eq m) b₁ b�
   match h with
   | WfTm.T_eq _ _ _ A h₁ h₂ => ⟨ rfl, A, h₁, h₂ ⟩
 
-lemma ty_index_array_inv (a i : Exp)(t : Typ)(h : Γ ⊢ .Binary (.Index .Array) a i : t): (Γ ⊢ a : .Array t) ∧ (Γ ⊢ i : .Int .Int) :=
+lemma ty_index_array_inv (a i : Exp)(t : Typ)(h : Γ ⊢ .Binary (.Index .Array) a i : t): (Γ ⊢ a : .Array t) ∧ (Γ ⊢ i : .Int .Nat) :=
   match h with
   | WfTm.T_index_array _ _ _ A h₁ h₂ => ⟨ h₁, h₂ ⟩
 
@@ -401,14 +401,9 @@ lemma ty_tuple_inv (e₁ e₂ : Exp)(t : Typ)(h : Γ ⊢ .TupleCtor e₁ e₂ : 
   match h with
   | WfTm.T_tuple _ e₁ e₂ A B h₁ h₂ => ⟨A, B, rfl, h₁, h₂⟩
 
--- lemma ty_floatToBits_inv (f : Exp) (h : Γ ⊢.{u} .Unary .FloatToBits f : t) : (Γ ⊢.{u} f : .Float 32) ∨ (Γ ⊢.{u} f : .Float 64) :=
---   match h with
---   | WfTm.T_floatToBits32 _ _ h => Or.inl h
---   | WfTm.T_floatToBits64 _ _ h => Or.inr h
-
--- def ty_floatToBits_inv (f : Exp) (h : Γ ⊢.{u} .Unary .FloatToBits f : t) : UInt32 :=
---   match h with
---   | WfTm.T_floatToBits32 _ _ h => Or.inl h
---   | WfTm.T_floatToBits64 _ _ h => Or.inr h
+lemma ty_floatToBits_inv (f : Exp) (h : Γ ⊢ .Unary .FloatToBits f : t) : t = .Int .Int ∧ ((Γ ⊢ f : .Float 32) ∨ (Γ ⊢ f : .Float 64)) :=
+  match h with
+  | WfTm.T_floatToBits32 _ _ h => ⟨ rfl, Or.inl h ⟩
+  | WfTm.T_floatToBits64 _ _ h => ⟨ rfl, Or.inr h ⟩
 
 end typing
