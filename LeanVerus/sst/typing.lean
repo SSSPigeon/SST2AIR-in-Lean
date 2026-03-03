@@ -397,6 +397,10 @@ lemma ty_if_inv (c b₁ b₂: Exp) (t : Typ) (h : Γ ⊢ .If c b₁ b₂ : t) : 
   match h with
   | WfTm.T_if _ _ _ _ _ hc h₁ h₂ => ⟨ hc, h₁, h₂⟩
 
+lemma ty_tuple_inv (e₁ e₂ : Exp)(t : Typ)(h : Γ ⊢ .TupleCtor e₁ e₂ : t) : ∃ A B, t = .Tuple A B ∧ (Γ ⊢ e₁ : A) ∧ (Γ ⊢ e₂ : B) :=
+  match h with
+  | WfTm.T_tuple _ e₁ e₂ A B h₁ h₂ => ⟨A, B, rfl, h₁, h₂⟩
+
 -- lemma ty_floatToBits_inv (f : Exp) (h : Γ ⊢.{u} .Unary .FloatToBits f : t) : (Γ ⊢.{u} f : .Float 32) ∨ (Γ ⊢.{u} f : .Float 64) :=
 --   match h with
 --   | WfTm.T_floatToBits32 _ _ h => Or.inl h

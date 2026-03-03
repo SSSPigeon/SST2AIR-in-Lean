@@ -103,6 +103,9 @@ def interp_array (t : Typ) : typ_interp tenv dom_aux (Typ.Array t) = List (typ_i
   simp[typ_interp, typ_subst, domain]
   congr
 
+def interp_tuple (t₁ t₂ : Typ) : typ_interp tenv dom_aux (Typ.Tuple t₁ t₂) = ((typ_interp tenv dom_aux t₁) × (typ_interp tenv dom_aux t₂)) := by
+  simp[typ_interp, typ_subst, domain]
+  congr
 
 
 end interp_results
