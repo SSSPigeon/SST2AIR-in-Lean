@@ -182,8 +182,7 @@ inductive Exp where
   /-- A constructor for the datatype with the name `dt` and the given `fields`. -/
   -- TODO: fix the fields of EnumCtor
   --| EnumCtor (dt : Ident) (variant : String) (data : List (String × Exp))
-  /- TODO -/
-  | TupleCtor (size : Nat) (data : List Exp)
+  | TupleCtor (e₁ e₂ : Exp)
   /-- Primitive unary function application. -/
   | Unary (op : UnaryOp) (arg : Exp)
   | Unaryr (op : UnaryOpr) (arg : Exp)
@@ -239,8 +238,8 @@ def Exp.hasDecEq (e₁ e₂ : Exp) : Decidable (e₁ = e₂) := by
     | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
     | isFalse h₁, _ | _, isFalse h₁  =>
       isFalse (by intro h₂; simp [h₁] at h₂)
-  case TupleCtor.TupleCtor size₁ data₁ size₂ data₂ =>
-    exact match decEq size₁ size₂, Exp.hasListDec data₁ data₂ with
+  case TupleCtor.TupleCtor e₁₁ e₁₂ e₂₁ e₂₂ =>
+    exact match Exp.hasDecEq e₁₁ e₂₁, Exp.hasDecEq e₁₂ e₂₂ with
     | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
     | isFalse h₁, _ | _, isFalse h₁  =>
       isFalse (by intro h₂; simp [h₁] at h₂)
@@ -378,7 +377,7 @@ theorem Exp.induct {P : Exp → Prop}
   (_call : ∀fn typs exps ty, (∀ e ∈ exps, P e) → P (.Call fn typs exps ty))
   (_calllambda : ∀body arg, P arg → (P body) → P (.CallLambda body arg))
   (_structctor : ∀dt fields, (∀ p ∈ fields, P p.2) → P (.StructCtor dt fields))
-  (_tuplector : ∀size data, (∀ _e ∈ data, P _e) → P (.TupleCtor size data))
+  (_tuplector : ∀e₁ e₂, P e₁ → P e₂ → P (.TupleCtor e₁ e₂))
   (_unary : ∀op arg, P arg → P (.Unary op arg))
   (_unaryr : ∀op arg, P arg → P (.Unaryr op arg))
   (_binary : ∀op arg₁ arg₂, P arg₁ → P arg₂ → P (.Binary op arg₁ arg₂))

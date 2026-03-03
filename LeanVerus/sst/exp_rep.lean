@@ -199,7 +199,7 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
 
         | .Int (.U _) | .Int (.I _) | .Int .Char | .Int .USize | .Int .ISize
         | .Float _ | .Array _ | .StrSlice | .TypParam _
-        | .SpecFn _ _ | .Decorated _ _ | .Tuple _ | .Struct _ _
+        | .SpecFn _ _ | .Decorated _ _ | .Tuple _ _ | .Struct _ _
         | .Enum _ _ | .AnonymousClosure _ _ | .FnDef _ _ | .AirNamed _ => nomatch hty
 
 
@@ -224,7 +224,7 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
           -- cast interp_nat.symm (div_totalized_nat l_nat r_nat)
         | .Int (.U _) | .Int (.I _) | .Int .Char | .Int .USize | .Int .ISize
         | .Float _ | .Array _ | .StrSlice | .TypParam _
-        | .SpecFn _ _ | .Decorated _ _ | .Tuple _ | .Struct _ _
+        | .SpecFn _ _ | .Decorated _ _ | .Tuple _ _ | .Struct _ _
         | .Enum _ _ | .AnonymousClosure _ _ | .FnDef _ _ | .AirNamed _ => nomatch hty
 
 
@@ -240,7 +240,7 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
 
   | .Let (tys : List Typ) (es : List Exp) (body : Exp) => sorry
   | .Quant (q : Quant) (var : Typ) (body : Exp) => sorry
-  | .TupleCtor (size : Nat) (data : List Exp) => sorry
+  | .TupleCtor e₁ e₂ => sorry
 
 
   | .Call (fn : CallFun) (typs : List Typ) (exps : List Exp) (ret : Typ) => sorry

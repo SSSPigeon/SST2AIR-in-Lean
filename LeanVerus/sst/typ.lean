@@ -102,7 +102,7 @@ inductive Typ where
   | Decorated (dec : TypDecoration) (ty : Typ)
   -- | Primitive (prm: Primitive) (ty: Typ)
   /-- Tuple, Enum, and Struct are simple cases of Dt in Rust -/
-  | Tuple (l : List Typ) /- In Lean, these are `Prod`s. -/
+  | Tuple (t₁ t₂ : Typ) /- In Lean, these are `Prod`s. -/
   /--
     Rust structs, corresponding to Lean `structure`s.
 
@@ -146,7 +146,7 @@ def Typ.is_closed (t : Typ): Bool :=
   | .SpecFn params ret => is_closed ret && is_closed_list params
   | .Decorated _ t' => is_closed t'
   -- | .Primitive _ t' => is_closed t'
-  | .Tuple l => is_closed_list l
+  | .Tuple t₁ t₂ => is_closed t₁ && is_closed t₂
   | .Struct _ fields => is_closed_list fields
   | .Enum _ params => is_closed_list params
   | .AnonymousClosure ts t => is_closed t && is_closed_list ts
@@ -179,11 +179,11 @@ def Typ.hasDecEq (t t' : Typ) : Decidable (t = t') := by
     | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
     | isFalse h₁, _ | _, isFalse h₁  =>
       isFalse (by intro h₂; simp [h₁] at h₂)
-  case Tuple.Tuple v₁ v₂ =>
-    exact match Typ.hasListDec v₁ v₂ with
-    | isTrue h => isTrue (by rw [h])
-    | isFalse h  =>
-      isFalse (by intro h; injection h; contradiction)
+  case Tuple.Tuple v₁ v₂ t₁ t₂ =>
+    exact match Typ.hasDecEq v₁ t₁, Typ.hasDecEq v₂ t₂ with
+    | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂];)
+    | isFalse h₁, _ | _, isFalse h₁  =>
+      isFalse (by intro h₃; simp [h₁] at h₃)
   case Struct.Struct n₁ p₁ n₂ p₂ | Enum.Enum n₁ p₁ n₂ p₂ | FnDef.FnDef n₁ p₁ n₂ p₂ =>
     exact match decEq n₁ n₂, Typ.hasListDec p₁ p₂ with
     | isTrue h₁, isTrue h₂ => isTrue (by rw [h₁, h₂])
@@ -265,10 +265,11 @@ def typ_subst (env : typ_env) (t : Typ) : ClosedTyp :=
   -- | .Primitive p t' =>
   --   ⟨ .Primitive p (typ_subst env t').1, by
   --     simp [Typ.is_closed]; exact (typ_subst env t').2⟩
-  | .Tuple l =>
-    let l' := typ_subst_list env l
-    ⟨.Tuple l'.1, by
-      simp [Typ.is_closed, l'.2]⟩
+  | .Tuple t₁ t₂ =>
+    let t₁' := typ_subst env t₁
+    let t₂' := typ_subst env t₂
+    ⟨.Tuple t₁'.1 t₂'.1, by
+      simp [Typ.is_closed, t₁'.2, t₂'.2]⟩
   | .Struct s fields =>
     let fs := typ_subst_list env fields
     ⟨.Struct s fs.1, by

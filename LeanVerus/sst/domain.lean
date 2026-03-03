@@ -49,10 +49,8 @@ def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   --   match prm with
   --   | .Array => sorry
   --   | .StrSlice => String
-  | ⟨.Tuple l, h⟩ => sorry
-    -- match type_rep t₁ typ_env, type_rep t₂ typ_env with
-    -- | some t₁', some t₂' => some (t₁' × t₂')
-    -- | _, _ => none
+  | ⟨.Tuple t₁ t₂, h⟩ =>
+    (domain dom_aux ⟨ t₁, by simp[Typ.is_closed] at h; exact h.1 ⟩) × (domain dom_aux ⟨ t₂, by simp[Typ.is_closed] at h; exact h.2 ⟩ )
   | ⟨.Struct name fields, h⟩ => sorry
     -- match list_to_finType fields typ_env with
     -- | none => none

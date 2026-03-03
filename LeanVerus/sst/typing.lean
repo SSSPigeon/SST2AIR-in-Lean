@@ -56,7 +56,7 @@ inductive WfTp : context → Typ → Prop
   --   ∀ Γ p t, Γ ⊢ t → Γ ⊢ .Primitive p t
 
   | tuple :
-    ∀ Γ l, ∀ t ∈ l, Γ ⊢ t → Γ ⊢ .Tuple l
+    ∀ Γ A B, Γ ⊢ A → Γ ⊢ B → Γ ⊢ .Tuple A B
 
   | struct :
     ∀ Γ n l, ∀ t ∈ l, Γ ⊢ t → Γ ⊢ .Struct n l
@@ -104,9 +104,7 @@ inductive WfTm : context → Typ → Exp → Prop
     ∀ Γ f, Γ ⊢ Exp.Const (.Float64 f) : (.Float 64)
 
   | T_tuple :
-    ∀ Γ s (l_ty : List Typ) l_exp, (_ : l_ty.length = l_exp.length) →
-    ∀ i, (_ : i ≥ 0 ∧ i < l_ty.length) → Γ ⊢ l_exp[i] : l_ty[i] →
-    Γ ⊢ .TupleCtor s l_exp : (.Tuple l_ty)
+    ∀ Γ e₁ e₂ A B, Γ ⊢ e₁ : A → Γ ⊢ e₂ : B → Γ ⊢ .TupleCtor e₁ e₂ : .Tuple A B
 
   | T_array :
     ∀ Γ l A, (∀ e ∈ l, Γ ⊢ e : A) → Γ ⊢ .ArrayLiteral l : .Array A

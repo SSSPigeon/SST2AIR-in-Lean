@@ -56,7 +56,7 @@ def rename_exp (ξ : Nat → Nat) : Exp → Exp
           have := List.sizeOf_lt_of_mem h
           grind [Prod.mk.sizeOf_spec]
         (name, rename_exp ξ e))
-  | .TupleCtor size data => .TupleCtor size (data.map (rename_exp ξ))
+  | .TupleCtor e₁ e₂ => .TupleCtor (rename_exp ξ e₁) (rename_exp ξ e₂)
   | .Unary op arg => .Unary op (rename_exp ξ arg)
   | .Unaryr op arg => .Unaryr op (rename_exp ξ arg)
   | .Binary op arg₁ arg₂ => .Binary op (rename_exp ξ arg₁) (rename_exp ξ arg₂)
@@ -110,7 +110,7 @@ def subst_exp (σ : Nat → Exp) : Exp → Exp
           have := List.sizeOf_lt_of_mem h
           grind [Prod.mk.sizeOf_spec]
         (name, subst_exp σ e))
-  | .TupleCtor size data => .TupleCtor size (data.map (subst_exp σ))
+  | .TupleCtor e₁ e₂ => .TupleCtor (subst_exp σ e₁) (subst_exp σ e₂)
   | .Unary op arg => .Unary op (subst_exp σ arg)
   | .Unaryr op arg => .Unaryr op (subst_exp σ arg)
   | .Binary op arg₁ arg₂ => .Binary op (subst_exp σ arg₁) (subst_exp σ arg₂)
@@ -417,12 +417,7 @@ def isClosed (k : Nat := 0) (e: Exp): Bool:=
         have := List.sizeOf_lt_of_mem h
         grind [Prod.mk.sizeOf_spec]
       isClosed k e)
-  | TupleCtor _ data => --List.foldl (fun acc exp => acc && isClosed k exp) true data
-    data.attach.all (fun e =>
-      have : sizeOf e.val < sizeOf data := by
-         have := List.sizeOf_lt_of_mem e.property
-         grind [Prod.mk.sizeOf_spec]
-    isClosed k e)
+  | TupleCtor e₁ e₂ => isClosed k e₁ && isClosed k e₂
   | Unary _ arg => isClosed k arg
   | Unaryr _ arg => isClosed k arg
   | Binary _ arg₁ arg₂ => isClosed k arg₁ && isClosed k arg₂
