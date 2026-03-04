@@ -48,14 +48,14 @@ def transf (e : sst.Exp) (aenv : axioms) : Expr × axioms:=
 
   | .Binary op e₁ e₂ =>
     match op with
-    | .Arith op' _ =>
+    | .Arith op' =>
       match op' with
       -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L1253
       | .Add => ⟨.Apply "ADD" [(transf e₁ aenv).1, (transf e₂ aenv).1], aenv.insert ADD_axiom⟩
       | _ => sorry
     | .And => ⟨.Multi .And [(transf e₁ aenv).1, (transf e₂ aenv).1], aenv⟩
     -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L1311
-    | .Index _ _ => ⟨.Apply "ARRAY_INDEX" [(transf e₁ aenv).1, (transf e₂ aenv).1], aenv.insert ARRAY_INDEX_axiom⟩
+    | .Index _ => ⟨.Apply "ARRAY_INDEX" [(transf e₁ aenv).1, (transf e₂ aenv).1], aenv.insert ARRAY_INDEX_axiom⟩
     | _ => sorry
 
    | _ => sorry

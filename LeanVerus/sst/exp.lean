@@ -139,7 +139,7 @@ inductive BinaryOp
   /-- Index into an array or slice, no bounds-checking.
     `verus_builtin::array_index` lowers to this.
     In SST, this can also be used as a Loc. -/
-  | Index (ak : ArrayKind)
+  | Index (ak : ArrayKind) --Index a i (a[i]) => array_index_get(a, i)
 deriving Repr, Inhabited, DecidableEq, Hashable
 
 inductive Quant where

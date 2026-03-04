@@ -10,14 +10,15 @@ variable (tenv : typ_env)  (dom_aux : ClosedTyp → Type)
 
 def val_vars tenv (Γ: context) dom_aux :=  (i : Nat) → (_ : i < Γ.length) → typ_interp tenv dom_aux Γ[i] --⊕ ExpError
 
-axiom div_zero_unspecified_value : Int → Int
+axiom div_zero_unspecified_value_int : Int → Int
 
 noncomputable def div_totalized_int (x y : Int) : Int :=
-  if y = 0 then div_zero_unspecified_value x else x / y
+  if y = 0 then div_zero_unspecified_value_int x else x / y
 
--- TODO: Ask Amar
-noncomputable def div_totalized_nat (x y : Nat) : Int :=
-  if y = 0 then div_zero_unspecified_value x else x / y
+axiom div_zero_unspecified_value_nat : Nat → Nat
+
+noncomputable def div_totalized_nat (x y : Nat) : Nat :=
+  if y = 0 then div_zero_unspecified_value_nat x else x / y
 
 noncomputable
 def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : Γ ⊢ e : t): typ_interp tenv dom_aux t:=
@@ -227,9 +228,7 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
           let r_nat :=
             exp_rep Γ tenv venv (Typ.Int .Nat) arg₂ (ty_div_inv arg₁ arg₂ (.Int .Nat) hty).2.2
             |> cast interp_nat
-          -- TODO
-          sorry
-          -- cast interp_nat.symm (div_totalized_nat l_nat r_nat)
+          cast interp_nat.symm (div_totalized_nat l_nat r_nat)
         | .Int (.U _) | .Int (.I _) | .Int .Char | .Int .USize | .Int .ISize
         | .Float _ | .Array _ | .StrSlice | .TypParam _
         | .SpecFn _ _ | .Decorated _ _ | .Tuple _ _ | .Struct _ _
