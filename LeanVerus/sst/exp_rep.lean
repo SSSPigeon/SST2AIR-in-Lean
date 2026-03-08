@@ -10,6 +10,8 @@ variable (tenv : typ_env)  (dom_aux : ClosedTyp → Type)
 
 def val_vars tenv (Γ: context) dom_aux :=  (i : Nat) → (_ : i < Γ.length) → typ_interp tenv dom_aux Γ[i] --⊕ ExpError
 
+section exception
+
 axiom div_zero_unspecified_value : {t : Type} → t → t
 
 noncomputable def div_totalized_int (x y : Int) : Int :=
@@ -17,6 +19,12 @@ noncomputable def div_totalized_int (x y : Int) : Int :=
 
 noncomputable def div_totalized_nat (x y : Nat) : Nat :=
   if y = 0 then div_zero_unspecified_value x else x / y
+
+axiom array_out_of_bound_unspecified_value : {t : Type} → List t → Nat → t
+
+axiom string_out_of_bound_unspecified_value : String → Nat → Char
+
+end exception
 
 noncomputable
 def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : Γ ⊢ e : t): typ_interp tenv dom_aux t:=
@@ -176,9 +184,8 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
         let rep_i := exp_rep Γ tenv venv (.Int .Nat) arg₂ htyi
         let rep_a' := cast (interp_array t) rep_a
         let rep_i' := cast interp_nat rep_i
-        let res := rep_a'[rep_i']?
-        -- TODO
-        sorry
+        rep_a'.getD rep_i' (array_out_of_bound_unspecified_value rep_a' rep_i')
+
       | .Slice => sorry
 
 
