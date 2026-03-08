@@ -10,15 +10,13 @@ variable (tenv : typ_env)  (dom_aux : ClosedTyp → Type)
 
 def val_vars tenv (Γ: context) dom_aux :=  (i : Nat) → (_ : i < Γ.length) → typ_interp tenv dom_aux Γ[i] --⊕ ExpError
 
-axiom div_zero_unspecified_value_int : Int → Int
+axiom div_zero_unspecified_value : {t : Type} → t → t
 
 noncomputable def div_totalized_int (x y : Int) : Int :=
-  if y = 0 then div_zero_unspecified_value_int x else x / y
-
-axiom div_zero_unspecified_value_nat : Nat → Nat
+  if y = 0 then div_zero_unspecified_value x else x / y
 
 noncomputable def div_totalized_nat (x y : Nat) : Nat :=
-  if y = 0 then div_zero_unspecified_value_nat x else x / y
+  if y = 0 then div_zero_unspecified_value x else x / y
 
 noncomputable
 def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : Γ ⊢ e : t): typ_interp tenv dom_aux t:=
