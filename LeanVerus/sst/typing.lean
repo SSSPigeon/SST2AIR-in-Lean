@@ -179,7 +179,7 @@ inductive WfTm : context → Typ → Exp → Prop
     Γ ⊢ .Binary (.Index .Array) a i : A
 
   | T_index_slice :
-    ∀ Γ s i, Γ ⊢ s : .StrSlice → Γ ⊢ i : .Int .Int →
+    ∀ Γ s i, Γ ⊢ s : .StrSlice → Γ ⊢ i : .Int .Nat →
     Γ ⊢ .Binary (.Index .Slice) s i : .Int .Char
 
   | T_let :
@@ -367,7 +367,7 @@ lemma ty_index_array_inv (a i : Exp)(t : Typ)(h : Γ ⊢ .Binary (.Index .Array)
   match h with
   | WfTm.T_index_array _ _ _ A h₁ h₂ => ⟨ h₁, h₂ ⟩
 
-lemma ty_index_slice_inv (s i : Exp)(t : Typ)(h : Γ ⊢ .Binary (.Index .Slice) s i : t): t = .Int .Char ∧ (Γ ⊢ s : .StrSlice) ∧ (Γ ⊢ i : .Int .Int) :=
+lemma ty_index_slice_inv (s i : Exp)(t : Typ)(h : Γ ⊢ .Binary (.Index .Slice) s i : t): t = .Int .Char ∧ (Γ ⊢ s : .StrSlice) ∧ (Γ ⊢ i : .Int .Nat) :=
   match h with
   | WfTm.T_index_slice _ _ _ h₁ h₂ => ⟨ rfl, h₁, h₂ ⟩
 

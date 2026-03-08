@@ -22,8 +22,6 @@ noncomputable def div_totalized_nat (x y : Nat) : Nat :=
 
 axiom array_out_of_bound_unspecified_value : {t : Type} → List t → Nat → t
 
-axiom string_out_of_bound_unspecified_value : String → Nat → Char
-
 end exception
 
 noncomputable
@@ -186,8 +184,16 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
         let rep_i' := cast interp_nat rep_i
         rep_a'.getD rep_i' (array_out_of_bound_unspecified_value rep_a' rep_i')
 
-      | .Slice => sorry
-
+      | .Slice =>
+        let heq := (ty_index_slice_inv arg₁ arg₂ t hty).1
+        let htys := (ty_index_slice_inv arg₁ arg₂ t hty).2.1
+        let htyi := (ty_index_slice_inv arg₁ arg₂ t hty).2.2
+        let rep_s := exp_rep Γ tenv venv .StrSlice arg₁ htys
+        let rep_i := exp_rep Γ tenv venv (.Int .Nat) arg₂ htyi
+        let rep_s' := (cast interp_strslice rep_s).toList
+        let rep_i' := cast interp_nat rep_i
+        let rep_char := (rep_s'.getD rep_i' (array_out_of_bound_unspecified_value rep_s' rep_i'))
+        cast_typ_interp heq.symm (cast interp_char.symm rep_char)
 
     | .Arith op =>
       match op with
