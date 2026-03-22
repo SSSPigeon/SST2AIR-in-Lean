@@ -14,6 +14,10 @@ require mathlib from git
 -- require ManySortedModelTheory from git
 --   "https://github.com/Mathias-Stout/Many-sorted-model-theory.git" @ "main"
 
+require ManySortedModelTheory from git
+  "https://github.com/SSSPigeon/AIR-Many-sorted-model-theory.git" @ "main"
+
+
 @[default_target]
 lean_lib «LeanVerus» where
   -- add any library configuration options here
