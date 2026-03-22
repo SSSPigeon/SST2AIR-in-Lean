@@ -11,6 +11,9 @@ package «lean_verus» where
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git"
 
+-- require ManySortedModelTheory from git
+--   "https://github.com/Mathias-Stout/Many-sorted-model-theory.git" @ "main"
+
 @[default_target]
 lean_lib «LeanVerus» where
   -- add any library configuration options here
