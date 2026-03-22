@@ -46,7 +46,6 @@ inductive Binop
   | Gt
   | EuclideanDiv
   | EuclideanMod
-  -- For idx, look at https://microsoft.github.io/z3guide/docs/theories/Special%20Relations/
   | Relation (rel: Relation) (idx: UInt64)
   | BitXor
   | BitAnd
