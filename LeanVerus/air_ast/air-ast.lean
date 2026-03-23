@@ -72,6 +72,9 @@ inductive airFunc : List AirSorts → AirSorts → Type
   | Mul : airFunc [Int, Int] Int
   -- | Distinct
 
+  -- Uninterpreted function symbols (linked to built-ins via axioms)
+  | ADD : airFunc [Int, Int] Int
+
   -- Functions in air examples:
 
   -- 1. Related to hastype:
