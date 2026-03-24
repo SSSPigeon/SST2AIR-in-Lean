@@ -2,14 +2,13 @@ import LeanVerus.Air_ast.Ast
 import Mathlib.Data.Set.Basic
 import LeanVerus.Air_ast.«Air-ast»
 
-open airast
+open MSFirstOrder MSLanguage AirSorts BoundedFormula airFunc
 
-def axioms := Set Axiom
 
 --  ∀ (x : Int) (y : Int), ADD(x, y) = Add(x, y)
 --   pos = 0  →  x  (outer ∀)
 --   pos = 1  →  y  (inner ∀)
-open MSFirstOrder MSLanguage AirSorts BoundedFormula airFunc
+
 
 def addAxiomArgs (i : Fin 2) :
   air_ast.Term
