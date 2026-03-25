@@ -9,6 +9,7 @@ open sst
 
 abbrev context := List Typ
 
+
 declare_syntax_cat judgment
 scoped syntax:50 term:51 : judgment
 scoped syntax:50 term:51 " : " term:51 : judgment

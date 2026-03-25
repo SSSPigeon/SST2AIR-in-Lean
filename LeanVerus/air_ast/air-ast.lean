@@ -1,4 +1,5 @@
 import MultisortedLogic.Semantics
+--import Init.Data.BitVec.Bitblast
 
 namespace MSFirstOrder
 
@@ -13,7 +14,7 @@ inductive AirSorts where
   | Int
   | Fun
   | Named (name: String)
-  | BitVec (width: UInt32)
+  | Bitvec (width: UInt32)
 deriving Repr, Inhabited, DecidableEq, Hashable
 
 abbrev Poly := AirSorts.Named "Poly"
@@ -30,7 +31,7 @@ inductive airFunc : List AirSorts → AirSorts → Type
   | True : airFunc [] Bool
   | False : airFunc [] Bool
   | Nat : (i : String) → airFunc [] Int
-  | BitVector : (bits : List Nat) → (width: UInt32) → airFunc [] (BitVec width)
+  | BitVector : (bits : List Nat) → (width: UInt32) → airFunc [] (Bitvec width)
 
   -- air-ast :: Binop
   | Implies : airFunc [Bool, Bool] Bool
@@ -93,6 +94,8 @@ inductive airFunc : List AirSorts → AirSorts → Type
   -- 2. array
   -- (declare-fun ARRAY (Dcr Type Dcr Type) Type)
   | ARRAY : airFunc [TYPE, TYPE] TYPE
+  -- (declare-fun array_index (Dcr Type Dcr Type Fun Poly) Poly)
+  | ARRAY_INDEX : airFunc [Fun, Poly] Poly
 
   -- 3. convert to/from POLY
   | ofI : airFunc [Int] Poly   -- I
@@ -107,7 +110,9 @@ def air_ast : MSLanguage AirSorts := {
 }
 
 
-/-- Making this an abbrev instead of a def makes Lean automatically unfold this,
+/--
+From Many-sorted-model-theory:
+Making this an abbrev instead of a def makes Lean automatically unfold this,
 which helps with typeclass inference -/
 abbrev AirMod (B I F P T BV : Type u) : AirSorts → Type _
   | AirSorts.Bool => B
@@ -115,7 +120,7 @@ abbrev AirMod (B I F P T BV : Type u) : AirSorts → Type _
   | AirSorts.Fun => F
   | AirSorts.Named "Poly" => P
   | AirSorts.Named "Type" => T
-  | AirSorts.BitVec w => BV
+  | AirSorts.Bitvec w => BV
   | _ => sorry
 
 /-!
@@ -136,7 +141,7 @@ abbrev AirCarrier (P T F : Type) : AirSorts → Type
   | AirSorts.Named "Poly"   => P
   | AirSorts.Named "TYPE"   => T
   | AirSorts.Fun       => F
-  | AirSorts.BitVec w  => Fin (2 ^ w.toNat)
+  | AirSorts.Bitvec w  => BitVec w.toNat
   | _ => sorry
 
 /-!

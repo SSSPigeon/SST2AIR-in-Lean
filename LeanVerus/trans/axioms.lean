@@ -8,8 +8,6 @@ open MSFirstOrder MSLanguage AirSorts BoundedFormula airFunc
 --  ∀ (x : Int) (y : Int), ADD(x, y) = Add(x, y)
 --   pos = 0  →  x  (outer ∀)
 --   pos = 1  →  y  (inner ∀)
-
-
 def addAxiomArgs (i : Fin 2) :
   air_ast.Term
     ((fun _ => Empty) ⊕ₛ [AirSorts.Int, AirSorts.Int].toFam)

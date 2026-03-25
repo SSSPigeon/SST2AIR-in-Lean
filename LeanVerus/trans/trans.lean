@@ -41,7 +41,7 @@ def constTerm {t : AirSorts} (f : airFunc [] t) : air_ast.Term TransVarFam t :=
   Term.func [] t f (fun i => Fin.elim0 i)
 
 /-- Apply a binary airFunc symbol to two already-translated terms. -/
-def binTerm {s₁ s₂ t : AirSorts}
+def binFuncTerm {s₁ s₂ t : AirSorts}
     (f  : airFunc [s₁, s₂] t)
     (tm₁ : air_ast.Term TransVarFam s₁)
     (tm₂ : air_ast.Term TransVarFam s₂) : air_ast.Term TransVarFam t :=
@@ -54,7 +54,25 @@ def binTerm {s₁ s₂ t : AirSorts}
 
 variable (tenv : typ_env) (dom_aux : ClosedTyp → Type)
 
-def transf (e : sst.Exp) (aenv : TransAxioms) : TransTerm × TransAxioms :=
+-- TODO
+def trans_typ (t : sst.Typ): AirSorts :=
+  match t with
+  | ._Bool => Bool
+  | .Int _ | .Float _ => Int
+  | .Array _ => Fun
+  | .StrSlice
+  | .TypParam (i : String)  /- Type parameter. For example, `α` in `List α`. -/
+  | .SpecFn (params : List Typ) (ret : Typ)    /-`spec_fn` type (t1, ..., tn) -> t0. -/
+  | .Decorated (dec : TypDecoration) (ty : Typ)
+  | .Tuple t₁ t₂ /- In Lean, these are `Prod`s. -/
+  | .Struct (name : Ident) (fields : List Typ)
+  | .Enum (name : Ident) (params : List Typ)
+  | .AnonymousClosure (typs: List Typ) (typ: Typ)
+  | .FnDef (fn: Ident) (typs: List Typ)
+  | .AirNamed (str : String) => sorry
+
+-- TODO: add types and typing judgments as arguments
+def trans_exp (e : sst.Exp)(aenv : TransAxioms) : TransTerm × TransAxioms :=
   match e with
   | .Const c =>
     -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L749
@@ -66,7 +84,7 @@ def transf (e : sst.Exp) (aenv : TransAxioms) : TransTerm × TransAxioms :=
       if i ≥ 0 then
         ⟨⟨Int, constTerm (airFunc.Nat i.repr)⟩, aenv⟩
       else
-        ⟨⟨Int, binTerm airFunc.Sub (constTerm (airFunc.Nat "0"))
+        ⟨⟨Int, binFuncTerm airFunc.Sub (constTerm (airFunc.Nat "0"))
                                     (constTerm (airFunc.Nat (-i).repr))⟩, aenv⟩
     | .Char c =>
       ⟨⟨Int, constTerm (airFunc.Nat (toString c.val))⟩, aenv⟩
@@ -76,13 +94,14 @@ def transf (e : sst.Exp) (aenv : TransAxioms) : TransTerm × TransAxioms :=
       ⟨⟨Int, constTerm (airFunc.Nat (toString f))⟩, aenv⟩
     | .StrSlice _ => sorry
 
-  -- Variables: sort cannot be determined without tenv; defaults to Int.
+  -- Variables: sort cannot be determined without tenv
+  -- TODO: add the type of e as an argument to transf
   | .Var idx => ⟨⟨Int, Term.var AirSorts.Int idx⟩, aenv⟩
 
   | .Binary op e₁ e₂ =>
     -- Thread the axiom environment through both sub-expressions.
-    let ⟨t₁, aenv₁⟩ := transf e₁ aenv
-    let ⟨t₂, aenv₂⟩ := transf e₂ aenv₁
+    let ⟨t₁, aenv₁⟩ := trans_exp e₁ aenv
+    let ⟨t₂, aenv₂⟩ := trans_exp e₂ aenv₁
     match op with
     | .Arith op' =>
       match op' with
@@ -90,13 +109,13 @@ def transf (e : sst.Exp) (aenv : TransAxioms) : TransTerm × TransAxioms :=
       | .Add =>
         match t₁, t₂ with
         | ⟨AirSorts.Int, tm₁⟩, ⟨AirSorts.Int, tm₂⟩ =>
-          ⟨⟨Int, binTerm airFunc.ADD tm₁ tm₂⟩, aenv₂.insert ADD_axiom_air⟩
+          ⟨⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂.insert ADD_axiom_air⟩
         | _, _ => sorry
       | _ => sorry
     | .And =>
       match t₁, t₂ with
       | ⟨AirSorts.Bool, tm₁⟩, ⟨AirSorts.Bool, tm₂⟩ =>
-        ⟨⟨Bool, binTerm (airFunc.And 2) tm₁ tm₂⟩, aenv₂⟩
+        ⟨⟨Bool, binFuncTerm (airFunc.And 2) tm₁ tm₂⟩, aenv₂⟩
       | _, _ => sorry
     -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L1311
     | .Index _ => sorry
