@@ -1,7 +1,6 @@
 import LeanVerus.Sst.Typ
 import LeanVerus.Sst.Typing
 import LeanVerus.Sst.Exp
-import LeanVerus.Sst.Domain
 import LeanVerus.Air_ast.«Air-ast»
 import LeanVerus.Trans.Axioms
 
@@ -34,7 +33,7 @@ abbrev TransVarFam : AirSorts → Type := fun _ => Nat
 abbrev TransTerm := Σ s : AirSorts, air_ast.Term TransVarFam s
 
 /-- The set of sentences (axioms) accumulated during translation. -/
-abbrev TransAxioms := Set air_ast.Sentence
+abbrev TransAxioms := air_ast.Theory
 
 /-- Apply a nullary airFunc symbol (a constant). -/
 def constTerm {t : AirSorts} (f : airFunc [] t) : air_ast.Term TransVarFam t :=

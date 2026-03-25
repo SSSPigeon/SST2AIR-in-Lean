@@ -110,19 +110,6 @@ def air_ast : MSLanguage AirSorts := {
 }
 
 
-/--
-From Many-sorted-model-theory:
-Making this an abbrev instead of a def makes Lean automatically unfold this,
-which helps with typeclass inference -/
-abbrev AirMod (B I F P T BV : Type u) : AirSorts → Type _
-  | AirSorts.Bool => B
-  | AirSorts.Int => I
-  | AirSorts.Fun => F
-  | AirSorts.Named "Poly" => P
-  | AirSorts.Named "Type" => T
-  | AirSorts.Bitvec w => BV
-  | _ => sorry
-
 /-!
 ## Carrier type assignment
 
@@ -165,7 +152,7 @@ def foldBools (op : Bool → Bool → Bool) (init : Bool)
     have h : (List.replicate n AirSorts.Bool).get i' = AirSorts.Bool := by simp
     cast (congrArg (AirCarrier P T F) h) (xs.toMap i')
 
-class CompatibleAir (P T F : Type) extends air_ast.MSStructure (AirCarrier P T F) where
+class AirMod (P T F : Type) extends air_ast.MSStructure (AirCarrier P T F) where
   -- Pin down the Bool/Int operations:
   funMap_true  : ∀ xs, funMap airFunc.True xs = true
   funMap_false : ∀ xs, funMap airFunc.False xs = false
@@ -194,19 +181,8 @@ class CompatibleAir (P T F : Type) extends air_ast.MSStructure (AirCarrier P T F
 
   -- Leave Poly/TYPE/Fun operations abstract — axioms constrain them
 
--- /--
--- ``Soundness``
--- Choice 1: for any sort s, and e1 e2: s, prove that ∀ v, Term.realize v e1 = Term.realize v e2.
--- theorem my_thm
---     {P T F : Type}
---     [CompatibleAir P T F]
---     (hAxioms : AirCarrier P T F ⊨ myAxioms)
---     : ∀ v, Term.realize v e1 = Term.realize v e2 := by
---   sorry
-
--- Choice 2: Prove that myAxioms ⊢ e1 = e2.
--- -/
-variable (myAxioms : air_ast.Theory)
+#check AirMod
+#check AirCarrier
 
 
 end MSLanguage
