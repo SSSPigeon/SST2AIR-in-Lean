@@ -5,6 +5,8 @@ import LeanVerus.Air_ast.«Air-ast»
 open MSFirstOrder MSLanguage AirSorts BoundedFormula airFunc
 
 
+-- Prelude axioms: https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs
+
 --  ∀ (x : Int) (y : Int), ADD(x, y) = Add(x, y)
 --   pos = 0  →  x  (outer ∀)
 --   pos = 1  →  y  (inner ∀)
@@ -29,3 +31,7 @@ def ADD_axiom_air : air_ast.Sentence :=
         (Term.func [AirSorts.Int, Int] Int Add addAxiomArgs)
       )
     )
+
+-- TODO: look at type invariants at https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L603
+
+-- TODO: ask about this: https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L758

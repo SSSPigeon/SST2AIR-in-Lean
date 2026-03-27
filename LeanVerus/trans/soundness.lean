@@ -6,7 +6,7 @@ import LeanVerus.Sst.Exp_Rep
 import LeanVerus.Air_ast.«Air-ast»
 import LeanVerus.Trans.Trans
 
-open sst typing MSFirstOrder MSLanguage AirSorts airFunc
+open sst typing MSFirstOrder MSLanguage AirSorts airFunc BoundedFormula
 
 
 -- The sorted carrier (AirSorts → Type) of an AirMod model.
@@ -23,7 +23,8 @@ theorem trans_sound
   -- in every AIR model satisfying the generated axioms, the translations evaluate equally
   (h_air : ∀ (P T F : Type) [AirMod P T F] (v : TransVarFam →ₛ AirMod.toFam P T F),
   AirMod.toFam P T F ⊨ (trans_exp e₁ ∅).2 ∪ (trans_exp e₂ ∅).2 →
-  -- TODO:
+  -- TODO: Consider the following (this doesn't typecheck now):
+  -- AirMod.toFam P T F ⊨ equal (trans_exp e₁ ∅).1.2 (trans_exp e₂ ∅).1.2 ):
   Term.realize v (trans_exp e₁ ∅).1.2 =
     h_sort ▸ Term.realize v (trans_exp e₂ ∅).1.2) :
   -- [e₁] = [e₂]: the SST denotations agree for all variable environments

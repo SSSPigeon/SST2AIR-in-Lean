@@ -68,13 +68,16 @@ inductive airFunc : List AirSorts → AirSorts → Type
   | And : (n : Nat) → airFunc (List.replicate n Bool) Bool
   | Or : (n : Nat) → airFunc (List.replicate n Bool) Bool
   | Xor : (n : Nat) → airFunc (List.replicate n Bool) Bool
-  | Add : airFunc [Int, Int] Int
-  | Sub : airFunc [Int, Int] Int
-  | Mul : airFunc [Int, Int] Int
-  -- | Distinct
+  | Add : (n : Nat) → airFunc (List.replicate n Int) Int
+  | Sub : (n : Nat) → airFunc (List.replicate n Int) Int
+  | Mul : (n : Nat) → airFunc (List.replicate n Int) Int
 
   -- Uninterpreted function symbols (linked to built-ins via axioms)
   | ADD : airFunc [Int, Int] Int
+  | SUB : airFunc [Int, Int] Int
+  | MUL : airFunc [Int, Int] Int
+  | EucDIV : airFunc [Int, Int] Int
+  | EucMOD : airFunc [Int, Int] Int
 
   -- Functions in air examples:
 
@@ -152,6 +155,27 @@ def foldBools (op : Bool → Bool → Bool) (init : Bool)
     have h : (List.replicate n AirSorts.Bool).get i' = AirSorts.Bool := by simp
     cast (congrArg (AirCarrier P T F) h) (xs.toMap i')
 
+/-- Fold a binary Int operation over a SortedTuple of n Ints. -/
+def foldInts (op : Int → Int → Int) (init : Int)
+    {n : Nat} (xs : SortedTuple (List.replicate n AirSorts.Int) (AirCarrier P T F)) : Int :=
+  List.foldl op init <| List.ofFn fun (i : Fin n) =>
+    let i' : Fin (List.replicate n AirSorts.Int).length := ⟨i.val, by simp⟩
+    have h : (List.replicate n AirSorts.Int).get i' = AirSorts.Int := by simp
+    cast (congrArg (AirCarrier P T F) h) (xs.toMap i')
+
+def toIntList {n : Nat} (xs : SortedTuple (List.replicate n AirSorts.Int) (AirCarrier P T F)) : List Int :=
+  List.ofFn fun (i : Fin n) =>
+    let i' : Fin (List.replicate n AirSorts.Int).length := ⟨i.val, by simp⟩
+    have h : (List.replicate n AirSorts.Int).get i' = AirSorts.Int := by simp
+    cast (congrArg (AirCarrier P T F) h) (xs.toMap i')
+
+/-- SMT-LIB-style subtraction: unary `-x` for n=1, left-associative `x - y - …` for n≥2. -/
+def subInts {n : Nat} (xs : SortedTuple (List.replicate n AirSorts.Int) (AirCarrier P T F)) : Int :=
+  match toIntList xs with
+  | []        => 0
+  | [x]       => -x
+  | x :: rest => List.foldl (· - ·) x rest
+
 class AirMod (P T F : Type) extends air_ast.MSStructure (AirCarrier P T F) where
   -- Pin down the Bool/Int operations:
   funMap_true  : ∀ xs, funMap airFunc.True xs = true
@@ -167,13 +191,18 @@ class AirMod (P T F : Type) extends air_ast.MSStructure (AirCarrier P T F) where
   funMap_ge    : ∀ xs, funMap airFunc.Ge xs = decide (xs.eval₂₁ ≥ xs.eval₂₂)
   funMap_lt    : ∀ xs, funMap airFunc.Lt xs = decide (xs.eval₂₁ < xs.eval₂₂)
   funMap_gt    : ∀ xs, funMap airFunc.Gt xs = decide (xs.eval₂₁ > xs.eval₂₂)
-  funMap_euclideanDiv : ∀ xs, funMap airFunc.EuclideanDiv xs = xs.eval₂₁ / xs.eval₂₂
-  funMap_euclideanMod : ∀ xs, funMap airFunc.EuclideanMod xs = xs.eval₂₁ % xs.eval₂₂
+
+  -- EuclideanDiv/Mod are only specified when the denominator is non-zero.
+  -- When xs.eval₂₂ = 0 there is no axiom constraining the result, so the behavior is unspecified.
+  funMap_euclideanDiv : ∀ xs, xs.eval₂₂ ≠ 0 → funMap airFunc.EuclideanDiv xs = xs.eval₂₁ / xs.eval₂₂
+  funMap_euclideanMod : ∀ xs, xs.eval₂₂ ≠ 0 → funMap airFunc.EuclideanMod xs = xs.eval₂₁ % xs.eval₂₂
 
 
-  funMap_add   : ∀ xs, funMap airFunc.Add xs = xs.eval₂₁ + xs.eval₂₂
-  funMap_sub   : ∀ xs, funMap airFunc.Sub xs = xs.eval₂₁ - xs.eval₂₂
-  funMap_mul   : ∀ xs, funMap airFunc.Mul xs = xs.eval₂₁ * xs.eval₂₂
+  funMap_add   : ∀ (n : Nat) xs, funMap (airFunc.Add n) xs = foldInts (· + ·) 0 xs
+  funMap_sub   : ∀ (n : Nat) xs, funMap (airFunc.Sub n) xs = subInts xs
+  funMap_mul   : ∀ (n : Nat) xs, funMap (airFunc.Mul n) xs = foldInts (· * ·) 1 xs
+
+
 
   funMap_and   : ∀ (n : Nat) xs, funMap (airFunc.And n) xs = foldBools (· && ·) true xs
   funMap_or    : ∀ (n : Nat) xs, funMap (airFunc.Or n) xs = foldBools (· || ·) false xs
