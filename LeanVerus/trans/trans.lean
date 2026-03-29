@@ -108,7 +108,7 @@ def trans_exp (e : sst.Exp)(aenv : TransAxioms) : TransTerm × TransAxioms :=
       | .Add =>
         match t₁, t₂ with
         | ⟨AirSorts.Int, tm₁⟩, ⟨AirSorts.Int, tm₂⟩ =>
-          ⟨⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂.insert ADD_axiom_air⟩
+          ⟨⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂⟩
         | _, _ => sorry
       | _ => sorry
     | .And =>

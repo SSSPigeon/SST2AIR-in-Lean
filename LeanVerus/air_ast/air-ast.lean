@@ -146,7 +146,6 @@ open SortedTuple airFunc
 variable {P T F : Type}
 
 variable [S : air_ast.MSStructure (AirCarrier P T F)]
--- TODO
 /-- Fold a binary Boolean operation over a SortedTuple of n Bools. -/
 def foldBools (op : Bool → Bool → Bool) (init : Bool)
     {n : Nat} (xs : SortedTuple (List.replicate n AirSorts.Bool) (AirCarrier P T F)) : Bool :=
