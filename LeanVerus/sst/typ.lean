@@ -1,9 +1,8 @@
-import Lean.Meta.Tactic.Simp
+import LeanVerus.Air_ast.«Air-ast»
 
 namespace sst
 
-open Lean (Json ToJson FromJson)
-
+open Lean
 /-- Alias for `Lean.Name`. -/
 abbrev Ident := Lean.Name
 
@@ -131,7 +130,7 @@ inductive Typ where
   | Enum (name : Ident) (params : List Typ)
   | AnonymousClosure (typs: List Typ) (typ: Typ) --SR: also a usize parameter. Don't know what it's for.
   | FnDef (fn: Ident) (typs: List Typ)
-  | AirNamed (str : String)
+  | Air (atype : MSFirstOrder.MSLanguage.AirSorts)
 deriving Repr, Inhabited, Hashable, BEq
 
 mutual
@@ -151,7 +150,7 @@ def Typ.is_closed (t : Typ): Bool :=
   | .Enum _ params => is_closed_list params
   | .AnonymousClosure ts t => is_closed t && is_closed_list ts
   | .FnDef _ ts => is_closed_list ts
-  | .AirNamed _ => true
+  | .Air _ => true
 
 def Typ.is_closed_list (ts : List Typ) : Bool :=
   match ts with
@@ -166,7 +165,7 @@ def Typ.hasDecEq (t t' : Typ) : Decidable (t = t') := by
   cases t <;> cases t' <;>
   try { apply isFalse ; intro h ; injection h }
   case _Bool._Bool | StrSlice => apply isTrue; rfl
-  case Int.Int v₁ v₂ | Float.Float v₁ v₂ | TypParam.TypParam v₁ v₂ | AirNamed.AirNamed v₁ v₂ =>
+  case Int.Int v₁ v₂ | Float.Float v₁ v₂ | TypParam.TypParam v₁ v₂ | Air.Air v₁ v₂ =>
     exact match decEq v₁ v₂ with
     | isTrue h => isTrue (by rw [h])
     | isFalse _ => isFalse (by intro h; injection h; contradiction)
@@ -218,7 +217,7 @@ def Typ.syntactic_eq (t t': Typ) : Option Bool :=
   | Int i₁, Int i₂ => some (i₁ = i₂)
   | TypParam s₁, TypParam s₂ =>
       if s₁ = s₂ then some true else none
-  | AirNamed s₁, AirNamed s₂ => some (s₁ = s₂)
+  | Air s₁, Air s₂ => some (s₁ = s₂)
   | SpecFn args₁ r₁, SpecFn args₂ r₂ =>
       match Typ.syntactic_eq r₁ r₂ with
       | some true =>
@@ -287,7 +286,7 @@ def typ_subst (env : typ_env) (t : Typ) : ClosedTyp :=
     let ps := typ_subst_list env ts
     ⟨.FnDef fn ps.1, by
       simp [Typ.is_closed, ps.2]⟩
-  | .AirNamed a => ⟨ .AirNamed a , by rfl ⟩
+  | .Air a => ⟨ .Air a , by rfl ⟩
 
 def typ_subst_list (env : typ_env) (ts : List Typ) : { us : List Typ // Typ.is_closed_list us } :=
   match ts with

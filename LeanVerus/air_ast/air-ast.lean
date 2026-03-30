@@ -18,9 +18,8 @@ inductive AirSorts where
 deriving Repr, Inhabited, DecidableEq, Hashable
 
 abbrev Poly := AirSorts.Named "Poly"
-
--- Type in air
 abbrev TYPE := AirSorts.Named "TYPE"
+abbrev FnDef := AirSorts.Named "FNDEF_TYPE"
 
 variable {α : AirSorts → Type*}
 

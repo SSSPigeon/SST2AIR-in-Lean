@@ -53,22 +53,22 @@ def binFuncTerm {s₁ s₂ t : AirSorts}
 
 variable (tenv : typ_env) (dom_aux : ClosedTyp → Type)
 
--- TODO
 def trans_typ (t : sst.Typ): AirSorts :=
   match t with
   | ._Bool => Bool
   | .Int _ | .Float _ => Int
   | .Array _ => Fun
-  | .StrSlice
-  | .TypParam (i : String)  /- Type parameter. For example, `α` in `List α`. -/
-  | .SpecFn (params : List Typ) (ret : Typ)    /-`spec_fn` type (t1, ..., tn) -> t0. -/
-  | .Decorated (dec : TypDecoration) (ty : Typ)
-  | .Tuple t₁ t₂ /- In Lean, these are `Prod`s. -/
-  | .Struct (name : Ident) (fields : List Typ)
-  | .Enum (name : Ident) (params : List Typ)
-  | .AnonymousClosure (typs: List Typ) (typ: Typ)
-  | .FnDef (fn: Ident) (typs: List Typ)
-  | .AirNamed (str : String) => sorry
+  | .StrSlice => sorry
+  | .TypParam (i : String)  => Poly
+  | .SpecFn _ _ => Fun
+  | .Decorated (dec : TypDecoration) (ty : Typ) => sorry
+  -- TODO
+  | .Tuple t₁ t₂ => sorry
+  | .Struct (name : Ident) (fields : List Typ) => sorry
+  | .Enum (name : Ident) (params : List Typ) => sorry
+  | .AnonymousClosure (typs: List Typ) (typ: Typ) => sorry
+  | .FnDef _ _ => FnDef
+  | .Air (asort : AirSorts) => asort
 
 -- TODO: add types and typing judgments as arguments
 def trans_exp (e : sst.Exp)(aenv : TransAxioms) : TransTerm × TransAxioms :=

@@ -69,7 +69,7 @@ inductive WfTp : context → Typ → Prop
     ∀ Γ n l, ∀ t ∈ l, Γ ⊢ t → Γ ⊢ .FnDef n l
 
   | air_named :
-    ∀ Γ s, Γ ⊢ .AirNamed s
+    ∀ Γ s, Γ ⊢ .Air s
 end
 
 
