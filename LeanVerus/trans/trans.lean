@@ -83,7 +83,7 @@ def trans_exp (e : sst.Exp)(aenv : TransAxioms) : TransTerm × TransAxioms :=
       if i ≥ 0 then
         ⟨⟨Int, constTerm (airFunc.Nat i.repr)⟩, aenv⟩
       else
-        ⟨⟨Int, binFuncTerm airFunc.Sub (constTerm (airFunc.Nat "0"))
+        ⟨⟨Int, binFuncTerm (airFunc.Sub 2) (constTerm (airFunc.Nat "0"))
                                     (constTerm (airFunc.Nat (-i).repr))⟩, aenv⟩
     | .Char c =>
       ⟨⟨Int, constTerm (airFunc.Nat (toString c.val))⟩, aenv⟩

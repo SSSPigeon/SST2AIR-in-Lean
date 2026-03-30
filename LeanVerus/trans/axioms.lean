@@ -68,71 +68,91 @@ def MOD_axiom : air_ast.Sentence :=
           (Term.func [AirSorts.Int, Int] Int EuclideanMod arithAxiomArgs)
         )
       )
+
+
+
 -- https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L825
-
-
-end ArithAxioms
-
-section BoundsAxioms
+-- These axioms are important to make sure that the nonlinear operations commute with casting-to-ints (e.g., (a * b) as int == (a as int) * (b as int)) where applicable.
 
 -- Helpers for building terms in the same 2-Int-variable context as arithAxiomArgs
 -- pos 0 = x (outer ∀), pos 1 = y (inner ∀)
-private abbrev Ctx2 := (fun (_ : AirSorts) => Empty) ⊕ₛ [AirSorts.Int, AirSorts.Int].toFam
+abbrev Ctx2 := (fun (_ : AirSorts) => Empty) ⊕ₛ [AirSorts.Int, AirSorts.Int].toFam
 
-private def const0 : air_ast.Term Ctx2 AirSorts.Int :=
+def const0 : air_ast.Term Ctx2 AirSorts.Int :=
   Term.func [] AirSorts.Int (airFunc.Nat "0") (fun i => absurd i.isLt (by simp))
 
-private def trueConst : air_ast.Term Ctx2 AirSorts.Bool :=
+def constTrue : air_ast.Term Ctx2 AirSorts.Bool :=
   Term.func [] AirSorts.Bool airFunc.True (fun i => absurd i.isLt (by simp))
 
-private def leT (a b : air_ast.Term Ctx2 AirSorts.Int) : air_ast.Term Ctx2 AirSorts.Bool :=
+def le (a b : air_ast.Term Ctx2 AirSorts.Int) : air_ast.Term Ctx2 AirSorts.Bool :=
   Term.func [AirSorts.Int, AirSorts.Int] AirSorts.Bool airFunc.Le
-    fun i => match i with
-      | ⟨0, _⟩ => a | ⟨1, _⟩ => b | ⟨_ + 2, h⟩ => absurd h (by simp)
+    fun i =>
+      match i with
+      | ⟨0, _⟩ => a
+      | ⟨1, _⟩ => b
+      | ⟨_ + 2, h⟩ => absurd h (by simp)
 
-private def ltT (a b : air_ast.Term Ctx2 AirSorts.Int) : air_ast.Term Ctx2 AirSorts.Bool :=
+def lt (a b : air_ast.Term Ctx2 AirSorts.Int) : air_ast.Term Ctx2 AirSorts.Bool :=
   Term.func [AirSorts.Int, AirSorts.Int] AirSorts.Bool airFunc.Lt
-    fun i => match i with
-      | ⟨0, _⟩ => a | ⟨1, _⟩ => b | ⟨_ + 2, h⟩ => absurd h (by simp)
+    fun i =>
+      match i with
+      | ⟨0, _⟩ => a
+      | ⟨1, _⟩ => b
+      | ⟨_ + 2, h⟩ => absurd h (by simp)
 
-private def and2T (a b : air_ast.Term Ctx2 AirSorts.Bool) : air_ast.Term Ctx2 AirSorts.Bool :=
+def binAnd (a b : air_ast.Term Ctx2 AirSorts.Bool) : air_ast.Term Ctx2 AirSorts.Bool :=
   Term.func (List.replicate 2 AirSorts.Bool) AirSorts.Bool (airFunc.And 2)
-    fun i => match i with
-      | ⟨0, _⟩ => a | ⟨1, _⟩ => b | ⟨_ + 2, h⟩ => absurd h (by simp)
+    fun i =>
+      match i with
+      | ⟨0, _⟩ => a
+      | ⟨1, _⟩ => b
+      | ⟨_ + 2, h⟩ => absurd h (by simp)
 
-private def impliesT (a b : air_ast.Term Ctx2 AirSorts.Bool) : air_ast.Term Ctx2 AirSorts.Bool :=
-  Term.func [AirSorts.Bool, AirSorts.Bool] AirSorts.Bool airFunc.Implies
-    fun i => match i with
-      | ⟨0, _⟩ => a | ⟨1, _⟩ => b | ⟨_ + 2, h⟩ => absurd h (by simp)
+def varX : air_ast.Term Ctx2 AirSorts.Int := arithAxiomArgs ⟨0, by simp⟩
+def varY : air_ast.Term Ctx2 AirSorts.Int := arithAxiomArgs ⟨1, by simp⟩
 
-private def varX : air_ast.Term Ctx2 AirSorts.Int := arithAxiomArgs ⟨0, by simp⟩
-private def varY : air_ast.Term Ctx2 AirSorts.Int := arithAxiomArgs ⟨1, by simp⟩
+def _Mul : air_ast.Term Ctx2 AirSorts.Int :=
+  Term.func [AirSorts.Int, AirSorts.Int] AirSorts.Int (Mul 2) arithAxiomArgs
 
-private def eucDivXY : air_ast.Term Ctx2 AirSorts.Int :=
+def eucDiv : air_ast.Term Ctx2 AirSorts.Int :=
   Term.func [AirSorts.Int, AirSorts.Int] AirSorts.Int EucDIV arithAxiomArgs
 
-private def eucModXY : air_ast.Term Ctx2 AirSorts.Int :=
+def eucMod : air_ast.Term Ctx2 AirSorts.Int :=
   Term.func [AirSorts.Int, AirSorts.Int] AirSorts.Int EucMOD arithAxiomArgs
 
+-- Axioms to ensure multiplication of nats are in-bounds
+-- TODO: https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L836
+def Mul_unsigned_bounds : air_ast.Sentence :=
+  all (s := Int) <| all (s := Int) <|
+    imp
+      (equal (binAnd (le const0 varX) (lt const0 varY)) constTrue)
+      (equal (binAnd (le const0 _Mul) (le _Mul varX)) constTrue)
+
+
+-- Axioms to ensure division of unsigned types are in-bounds
+-- https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L851
 -- ∀ x y : Int, (0 ≤ x ∧ 0 < y) → (0 ≤ EucDIV(x,y) ∧ EucDIV(x,y) ≤ x)
 def EucDiv_unsigned_bounds : air_ast.Sentence :=
   all (s := Int) <| all (s := Int) <|
-    equal
-      (impliesT
-        (and2T (leT const0 varX) (ltT const0 varY))
-        (and2T (leT const0 eucDivXY) (leT eucDivXY varX)))
-      trueConst
+    imp
+      (equal (binAnd (le const0 varX) (lt const0 varY)) constTrue)
+      (equal (binAnd (le const0 eucDiv) (le eucDiv varX)) constTrue)
 
+
+-- Axiom to ensure modulo of unsigned types are in-bounds
+-- https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L864
 -- ∀ x y : Int, (0 ≤ x ∧ 0 < y) → (0 ≤ EucMOD(x,y) ∧ EucMOD(x,y) < y)
 def EucMod_unsigned_bounds : air_ast.Sentence :=
   all (s := Int) <| all (s := Int) <|
-    equal
-      (impliesT
-        (and2T (leT const0 varX) (ltT const0 varY))
-        (and2T (leT const0 eucModXY) (ltT eucModXY varY)))
-      trueConst
+    imp
+      (equal (binAnd (le const0 varX) (lt const0 varY)) constTrue)
+      (equal (binAnd (le const0 eucMod) (lt eucMod varY)) constTrue)
 
-end BoundsAxioms
+end ArithAxioms
+
+section PloyCastingAxioms
+
+end PloyCastingAxioms
 
 -- TODO: look at type invariants at https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L603
 
