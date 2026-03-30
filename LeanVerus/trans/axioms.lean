@@ -76,15 +76,15 @@ def MOD_axiom : air_ast.Sentence :=
 
 -- Helpers for building terms in the same 2-Int-variable context as arithAxiomArgs
 -- pos 0 = x (outer ∀), pos 1 = y (inner ∀)
-abbrev Ctx2 := (fun (_ : AirSorts) => Empty) ⊕ₛ [AirSorts.Int, AirSorts.Int].toFam
+abbrev Ctx2Ints := (fun (_ : AirSorts) => Empty) ⊕ₛ [AirSorts.Int, AirSorts.Int].toFam
 
-def const0 : air_ast.Term Ctx2 AirSorts.Int :=
+def const0 : air_ast.Term Ctx2Ints AirSorts.Int :=
   Term.func [] AirSorts.Int (airFunc.Nat "0") (fun i => absurd i.isLt (by simp))
 
-def constTrue : air_ast.Term Ctx2 AirSorts.Bool :=
+def constTrue : air_ast.Term Ctx2Ints AirSorts.Bool :=
   Term.func [] AirSorts.Bool airFunc.True (fun i => absurd i.isLt (by simp))
 
-def le (a b : air_ast.Term Ctx2 AirSorts.Int) : air_ast.Term Ctx2 AirSorts.Bool :=
+def le (a b : air_ast.Term Ctx2Ints AirSorts.Int) : air_ast.Term Ctx2Ints AirSorts.Bool :=
   Term.func [AirSorts.Int, AirSorts.Int] AirSorts.Bool airFunc.Le
     fun i =>
       match i with
@@ -92,7 +92,7 @@ def le (a b : air_ast.Term Ctx2 AirSorts.Int) : air_ast.Term Ctx2 AirSorts.Bool 
       | ⟨1, _⟩ => b
       | ⟨_ + 2, h⟩ => absurd h (by simp)
 
-def lt (a b : air_ast.Term Ctx2 AirSorts.Int) : air_ast.Term Ctx2 AirSorts.Bool :=
+def lt (a b : air_ast.Term Ctx2Ints AirSorts.Int) : air_ast.Term Ctx2Ints AirSorts.Bool :=
   Term.func [AirSorts.Int, AirSorts.Int] AirSorts.Bool airFunc.Lt
     fun i =>
       match i with
@@ -100,7 +100,7 @@ def lt (a b : air_ast.Term Ctx2 AirSorts.Int) : air_ast.Term Ctx2 AirSorts.Bool 
       | ⟨1, _⟩ => b
       | ⟨_ + 2, h⟩ => absurd h (by simp)
 
-def binAnd (a b : air_ast.Term Ctx2 AirSorts.Bool) : air_ast.Term Ctx2 AirSorts.Bool :=
+def binAnd (a b : air_ast.Term Ctx2Ints AirSorts.Bool) : air_ast.Term Ctx2Ints AirSorts.Bool :=
   Term.func (List.replicate 2 AirSorts.Bool) AirSorts.Bool (airFunc.And 2)
     fun i =>
       match i with
@@ -108,16 +108,16 @@ def binAnd (a b : air_ast.Term Ctx2 AirSorts.Bool) : air_ast.Term Ctx2 AirSorts.
       | ⟨1, _⟩ => b
       | ⟨_ + 2, h⟩ => absurd h (by simp)
 
-def varX : air_ast.Term Ctx2 AirSorts.Int := arithAxiomArgs ⟨0, by simp⟩
-def varY : air_ast.Term Ctx2 AirSorts.Int := arithAxiomArgs ⟨1, by simp⟩
+def varX : air_ast.Term Ctx2Ints AirSorts.Int := arithAxiomArgs ⟨0, by simp⟩
+def varY : air_ast.Term Ctx2Ints AirSorts.Int := arithAxiomArgs ⟨1, by simp⟩
 
-def _Mul : air_ast.Term Ctx2 AirSorts.Int :=
+def _Mul : air_ast.Term Ctx2Ints AirSorts.Int :=
   Term.func [AirSorts.Int, AirSorts.Int] AirSorts.Int (Mul 2) arithAxiomArgs
 
-def eucDiv : air_ast.Term Ctx2 AirSorts.Int :=
+def eucDiv : air_ast.Term Ctx2Ints AirSorts.Int :=
   Term.func [AirSorts.Int, AirSorts.Int] AirSorts.Int EucDIV arithAxiomArgs
 
-def eucMod : air_ast.Term Ctx2 AirSorts.Int :=
+def eucMod : air_ast.Term Ctx2Ints AirSorts.Int :=
   Term.func [AirSorts.Int, AirSorts.Int] AirSorts.Int EucMOD arithAxiomArgs
 
 -- Axioms to ensure multiplication of nats are in-bounds
@@ -151,6 +151,40 @@ def EucMod_unsigned_bounds : air_ast.Sentence :=
 end ArithAxioms
 
 section PloyCastingAxioms
+
+abbrev CtxBool := (fun (_ : AirSorts) => Empty) ⊕ₛ [AirSorts.Bool].toFam
+
+abbrev CtxInt  := (fun (_ : AirSorts) => Empty) ⊕ₛ [AirSorts.Int].toFam
+
+-- ∀ x : Bool, x = toB(ofB(x))
+def unbox_box_bool : air_ast.Sentence :=
+  all (s := Bool) <|
+    let x : air_ast.Term CtxBool AirSorts.Bool :=
+      Term.var AirSorts.Bool (Sum.inr ⟨⟨0, by simp⟩, rfl⟩)
+    equal x
+      (Term.func [Poly] AirSorts.Bool airFunc.toB
+        fun i => match i with
+          | ⟨0, _⟩ =>
+            Term.func [AirSorts.Bool] Poly airFunc.ofB
+              fun i => match i with
+                | ⟨0, _⟩ => x
+                | ⟨_ + 1, h⟩ => absurd h (by simp)
+          | ⟨_ + 1, h⟩ => absurd h (by simp))
+
+-- ∀ x : Int, x = toI(ofI(x))
+def unbox_box_int : air_ast.Sentence :=
+  all (s := Int) <|
+    let x : air_ast.Term CtxInt AirSorts.Int :=
+      Term.var AirSorts.Int (Sum.inr ⟨⟨0, by simp⟩, rfl⟩)
+    equal x
+      (Term.func [Poly] AirSorts.Int airFunc.toI
+        fun i => match i with
+          | ⟨0, _⟩ =>
+            Term.func [AirSorts.Int] Poly airFunc.ofI
+              fun i => match i with
+                | ⟨0, _⟩ => x
+                | ⟨_ + 1, h⟩ => absurd h (by simp)
+          | ⟨_ + 1, h⟩ => absurd h (by simp))
 
 end PloyCastingAxioms
 
