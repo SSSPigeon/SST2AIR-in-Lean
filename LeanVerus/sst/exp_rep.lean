@@ -219,7 +219,7 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
         | .Int (.U _) | .Int (.I _) | .Int .Char | .Int .USize | .Int .ISize
         | .Float _ | .Array _ | .StrSlice | .TypParam _
         | .SpecFn _ _ | .Decorated _ _ | .Tuple _ _ | .Struct _ _
-        | .Enum _ _ | .AnonymousClosure _ _ | .FnDef _ _ | .AirNamed _ => nomatch hty
+        | .Enum _ _ | .AnonymousClosure _ _ | .FnDef _ _ | .Air _ => nomatch hty
 
 
       | .EuclideanDiv =>
@@ -243,7 +243,7 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
         | .Int (.U _) | .Int (.I _) | .Int .Char | .Int .USize | .Int .ISize
         | .Float _ | .Array _ | .StrSlice | .TypParam _
         | .SpecFn _ _ | .Decorated _ _ | .Tuple _ _ | .Struct _ _
-        | .Enum _ _ | .AnonymousClosure _ _ | .FnDef _ _ | .AirNamed _ => nomatch hty
+        | .Enum _ _ | .AnonymousClosure _ _ | .FnDef _ _ | .Air _ => nomatch hty
 
 
       | _ => sorry
