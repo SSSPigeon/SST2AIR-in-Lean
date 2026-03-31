@@ -21,12 +21,10 @@ theorem trans_sound
   -- the two translations land in the same sort
   (h_sort : (trans_exp e₁ ∅).1.1 = (trans_exp e₂ ∅).1.1)
   -- in every AIR model satisfying the generated axioms, the translations evaluate equally
-  (h_air : ∀ (P T F : Type) [AirMod P T F] (v : TransVarFam →ₛ AirMod.toFam P T F),
-  AirMod.toFam P T F ⊨ (trans_exp e₁ ∅).2 ∪ (trans_exp e₂ ∅).2 →
-  -- TODO: Consider the following (this doesn't typecheck now):
-  -- AirMod.toFam P T F ⊨ equal (trans_exp e₁ ∅).1.2 (trans_exp e₂ ∅).1.2 ):
-  Term.realize v (trans_exp e₁ ∅).1.2 =
-    h_sort ▸ Term.realize v (trans_exp e₂ ∅).1.2) :
+  (h_air : ∀ (P T F : Type) [AirMod P T F],
+    AirMod.toFam P T F ⊨ (trans_exp e₁ ∅).2 ∪ (trans_exp e₂ ∅).2 →
+    ∀ (v : TransVarFam →ₛ AirMod.toFam P T F),
+      ((trans_exp e₁ ∅).1.2.equal (h_sort ▸ (trans_exp e₂ ∅).1.2)).Realize v) :
   -- [e₁] = [e₂]: the SST denotations agree for all variable environments
   ∀ (venv : val_vars tenv Γ dom_aux),
     exp_rep dom_aux Γ tenv venv t e₁ hty₁ = exp_rep dom_aux Γ tenv venv t e₂ hty₂ := sorry

@@ -4,7 +4,7 @@ import LeanVerus.Air_ast.«Air-ast»
 
 open MSFirstOrder MSLanguage AirSorts BoundedFormula airFunc
 
-
+section PreludeAxioms
 -- Prelude axioms: https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs
 
 section ArithAxioms
@@ -191,3 +191,9 @@ end PloyCastingAxioms
 -- TODO: look at type invariants at https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L603
 
 -- TODO: ask about this: https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L758
+
+end PreludeAxioms
+
+
+section TransAxioms
+end TransAxioms
