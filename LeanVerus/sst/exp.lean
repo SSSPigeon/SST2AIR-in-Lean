@@ -367,8 +367,7 @@ def Exp.syntactic_eq_list (es₁ es₂ : List Exp) : Option Bool :=
 end
 
 /--
-Induction rule for `TermType`: the default induction tactic doesn't yet support
-nested or mutual induction types.
+Induction rule for `TermType`: the default induction tactic doesn't yet support nested or mutual induction types.
 -/
 @[induction_eliminator, elab_as_elim]
 theorem Exp.induct {P : Exp → Prop}

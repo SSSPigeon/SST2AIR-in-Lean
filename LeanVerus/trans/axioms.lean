@@ -192,6 +192,11 @@ end PloyCastingAxioms
 
 -- TODO: ask about this: https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L758
 
+def preludeAxioms : air_ast.Theory :=
+  {ADD_axiom, SUB_axiom, MUL_axiom, DIV_axiom, MOD_axiom,
+   Mul_unsigned_bounds, EucDiv_unsigned_bounds, EucMod_unsigned_bounds,
+   unbox_box_bool, unbox_box_int}
+
 end PreludeAxioms
 
 

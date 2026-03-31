@@ -118,11 +118,7 @@ def air_ast : MSLanguage AirSorts := {
 We interpret:
 - `AirSorts.Bool` as Lean's `Bool`
 - `AirSorts.Int`  as Lean's `Int`
-- `AirSorts.Fun`  as `Unit` (placeholder)
-- `AirSorts.Named _` (including `Poly`, `TYPE`) as `Int`
-  (We encode Poly values and TYPE tags uniformly as integers.
-   For TYPE, each type-tag like BOOL, INT, NAT, etc. gets a distinct Int code.)
-- `AirSorts.BitVec w` as `Fin (2 ^ w.toNat)`
+- `AirSorts.BitVec w` as `BitVec w.toNat`
 -/
 abbrev AirCarrier (P T F : Type) : AirSorts → Type
   | AirSorts.Bool      => Bool

@@ -29,6 +29,8 @@ open sst typing MSFirstOrder MSLanguage AirSorts airFunc
     SST variables are de Bruijn indices (Nat), and we treat every sort uniformly. -/
 abbrev TransVarFam : AirSorts → Type := fun _ => Nat
 
+example : TransVarFam Poly = _root_.Nat := by simp
+
 /-- A translated term paired with its AIR sort. -/
 abbrev TransTerm := Σ s : AirSorts, air_ast.Term TransVarFam s
 
@@ -58,20 +60,22 @@ def trans_typ (t : sst.Typ): AirSorts :=
   | ._Bool => Bool
   | .Int _ | .Float _ => Int
   | .Array _ => Fun
-  | .StrSlice => sorry
   | .TypParam (i : String)  => Poly
   | .SpecFn _ _ => Fun
-  | .Decorated (dec : TypDecoration) (ty : Typ) => sorry
+  | .FnDef _ _ => FnDef
+  | .Air (asort : AirSorts) => asort
   -- TODO
   | .Tuple t₁ t₂ => sorry
+
+  | .StrSlice => sorry
+  | .Decorated (dec : TypDecoration) (ty : Typ) => sorry
   | .Struct (name : Ident) (fields : List Typ) => sorry
   | .Enum (name : Ident) (params : List Typ) => sorry
   | .AnonymousClosure (typs: List Typ) (typ: Typ) => sorry
-  | .FnDef _ _ => FnDef
-  | .Air (asort : AirSorts) => asort
+
 
 -- TODO: add types and typing judgments as arguments
-def trans_exp (e : sst.Exp)(aenv : TransAxioms) : TransTerm × TransAxioms :=
+def trans_exp {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(aenv : TransAxioms) : TransTerm × TransAxioms :=
   match e with
   | .Const c =>
     -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L749
