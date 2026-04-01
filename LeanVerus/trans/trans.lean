@@ -73,7 +73,6 @@ def trans_typ (t : sst.Typ): AirSorts :=
   | .Enum (name : Ident) (params : List Typ) => sorry
   | .AnonymousClosure (typs: List Typ) (typ: Typ) => sorry
 
-
 -- TODO: add types and typing judgments as arguments
 def trans_exp {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(aenv : TransAxioms) : TransTerm × TransAxioms :=
   match e with
@@ -116,8 +115,15 @@ def trans_exp {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(ae
           match t₁, t₂ with
           | ⟨AirSorts.Int, tm₁⟩, ⟨AirSorts.Int, tm₂⟩ =>
             ⟨⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂⟩
+          | _, _ => unreachable!
+        | .Int .Nat =>
+          have ⟨h₁, h₂⟩ := add_same_type e₁ e₂ (.Int .Nat) hty
+          let ⟨t₁, aenv₁⟩ := trans_exp e₁ (.Int .Nat) h₁ aenv
+          let ⟨t₂, aenv₂⟩ := trans_exp e₂ (.Int .Nat) h₂ aenv₁
+          match t₁, t₂ with
+          | ⟨AirSorts.Int, tm₁⟩, ⟨AirSorts.Int, tm₂⟩ =>
+            ⟨⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂⟩
           | _, _ => sorry
-        | .Int .Nat => sorry
         | .Int (.U _) | .Int (.I _) | .Int .Char | .Int .USize | .Int .ISize
         | .Float _ | .Array _ | .StrSlice | .TypParam _
         | .SpecFn _ _ | .Decorated _ _ | .Tuple _ _ | .Struct _ _
@@ -135,3 +141,33 @@ def trans_exp {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(ae
     | _ => sorry
 
   | _ => sorry
+
+/-- The AIR sort of a translated expression equals `trans_typ` of its SST type. -/
+def trans_exp_sort {Γ : context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t) (aenv : TransAxioms) : (trans_exp e t hty aenv).1.1 = trans_typ t := by sorry
+  -- induction hty generalizing aenv with
+  -- | T_bool _ b    => rfl
+  -- | T_int _ i     => unfold trans_exp; split_ifs <;> rfl
+  -- | T_char _ c    => rfl
+  -- | T_float32 _ f => rfl
+  -- | T_float64 _ f => rfl
+  -- | T_arith_add_int _ b₁ b₂ h₁ h₂ ih₁ ih₂ =>
+  --   unfold trans_exp; simp only [trans_typ]
+  --   have hs₁ : (trans_exp b₁ (.Int .Int) h₁ aenv).1.1 = AirSorts.Int := by
+  --     simpa [trans_typ] using ih₁ aenv
+  --   rcases trans_exp b₁ (.Int .Int) h₁ aenv with ⟨⟨s₁, tm₁⟩, aenv₁⟩
+  --   simp only at hs₁; subst hs₁
+  --   have hs₂ : (trans_exp b₂ (.Int .Int) h₂ aenv₁).1.1 = AirSorts.Int := by
+  --     simpa [trans_typ] using ih₂ aenv₁
+  --   rcases trans_exp b₂ (.Int .Int) h₂ aenv₁ with ⟨⟨s₂, tm₂⟩, aenv₂⟩
+  --   simp only at hs₂; subst hs₂; rfl
+  -- | T_arith_add_nat _ b₁ b₂ h₁ h₂ ih₁ ih₂ =>
+  --   unfold trans_exp; simp only [trans_typ]
+  --   have hs₁ : (trans_exp b₁ (.Int .Nat) h₁ aenv).1.1 = AirSorts.Int := by
+  --     simpa [trans_typ] using ih₁ aenv
+  --   rcases trans_exp b₁ (.Int .Nat) h₁ aenv with ⟨⟨s₁, tm₁⟩, aenv₁⟩
+  --   simp only at hs₁; subst hs₁
+  --   have hs₂ : (trans_exp b₂ (.Int .Nat) h₂ aenv₁).1.1 = AirSorts.Int := by
+  --     simpa [trans_typ] using ih₂ aenv₁
+  --   rcases trans_exp b₂ (.Int .Nat) h₂ aenv₁ with ⟨⟨s₂, tm₂⟩, aenv₂⟩
+  --   simp only at hs₂; subst hs₂; rfl
+  -- | _ => sorry
