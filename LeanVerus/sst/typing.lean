@@ -336,21 +336,46 @@ lemma ty_not_inv (b : Exp) (h : Γ ⊢ .Unary .Not b : t) : t = ._Bool ∧ (Γ �
   match h with
   | WfTm.T_not _ _ h => ⟨ rfl, h ⟩
 
+lemma not_same_type (b : Exp) (t : Typ) (h : Γ ⊢ .Unary .Not b : t):
+(Γ ⊢ b : t) :=
+  match h with
+  | WfTm.T_not _ _ h => h
+
 lemma ty_and_inv (b₁ b₂ : Exp) (h : Γ ⊢ .Binary .And b₁ b₂ : t) : t = ._Bool ∧ (Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
   match h with
   | WfTm.T_and Γ _ _ h₁ h₂ => ⟨ rfl, h₁, h₂ ⟩
+
+lemma and_same_type (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary .And b₁ b₂ : t):
+(Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
+  match h with
+  | WfTm.T_and Γ _ _ h₁ h₂ => ⟨ h₁, h₂ ⟩
 
 lemma ty_or_inv (b₁ b₂ : Exp) (h : Γ ⊢ .Binary .Or b₁ b₂ : t) : t = ._Bool ∧ (Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
   match h with
   | WfTm.T_or Γ _ _ h₁ h₂ => ⟨ rfl, h₁, h₂ ⟩
 
+lemma or_same_type (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary .Or b₁ b₂ : t):
+(Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
+  match h with
+  | WfTm.T_or Γ _ _ h₁ h₂ => ⟨ h₁, h₂ ⟩
+
 lemma ty_xor_inv (b₁ b₂ : Exp) (h : Γ ⊢ .Binary .Xor b₁ b₂ : t) : t = ._Bool ∧ (Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
   match h with
   | WfTm.T_xor Γ _ _ h₁ h₂ => ⟨ rfl, h₁, h₂ ⟩
 
+lemma xor_same_type (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary .Xor b₁ b₂ : t):
+(Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
+  match h with
+  | WfTm.T_xor Γ _ _ h₁ h₂ => ⟨ h₁, h₂ ⟩
+
 lemma ty_implies_inv (b₁ b₂ : Exp) (h : Γ ⊢ .Binary .Implies b₁ b₂ : t) : t = ._Bool ∧ (Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
   match h with
   | WfTm.T_implies Γ _ _ h₁ h₂ => ⟨ rfl, h₁, h₂ ⟩
+
+lemma implies_same_type (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary .Implies b₁ b₂ : t):
+(Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
+  match h with
+  | WfTm.T_implies Γ _ _ h₁ h₂ => ⟨ h₁, h₂ ⟩
 
 lemma ty_ineq_inv (b₁ b₂ : Exp)(op : InequalityOp) (h : Γ ⊢ .Binary (.Inequality op) b₁ b₂ : t) : t = ._Bool ∧ (Γ ⊢ b₁ : Typ.Int .Int) ∧ (Γ ⊢ b₂ : Typ.Int .Int) :=
   match h with
@@ -379,12 +404,22 @@ lemma ty_add_inv (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .Add) b
   | WfTm.T_arith_add_int _ _ _ h₁ h₂ => ⟨Or.inl rfl, h₁, h₂⟩
   | WfTm.T_arith_add_nat _ _ _ h₁ h₂ => ⟨Or.inr rfl, h₁, h₂⟩
 
+lemma add_same_type (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .Add) b₁ b₂ : t):
+(Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
+  match h with
+  | WfTm.T_arith_add_int _ _ _ h₁ h₂ | WfTm.T_arith_add_nat _ _ _ h₁ h₂ => ⟨ h₁, h₂ ⟩
+
 lemma ty_div_inv (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .EuclideanDiv) b₁ b₂ : t):
 (t = .Int .Int ∨ t = .Int .Nat) ∧
 (Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
   match h with
   | WfTm.T_arith_div_int _ _ _ h₁ h₂ => ⟨Or.inl rfl, h₁, h₂⟩
   | WfTm.T_arith_div_nat _ _ _ h₁ h₂ => ⟨Or.inr rfl, h₁, h₂⟩
+
+lemma div_same_type (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .EuclideanDiv) b₁ b₂ : t):
+(Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
+  match h with
+  | WfTm.T_arith_div_int _ _ _ h₁ h₂ | WfTm.T_arith_div_nat _ _ _ h₁ h₂ => ⟨ h₁, h₂ ⟩
 
 lemma ty_mod_inv (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .EuclideanMod) b₁ b₂ : t):
 (t = .Int .Int ∨ t = .Int .Nat) ∧
@@ -393,6 +428,10 @@ lemma ty_mod_inv (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .Euclid
   | WfTm.T_arith_mod_int _ _ _ h₁ h₂ => ⟨Or.inl rfl, h₁, h₂⟩
   | WfTm.T_arith_mod_nat _ _ _ h₁ h₂ => ⟨Or.inr rfl, h₁, h₂⟩
 
+lemma mod_same_type (b₁ b₂ : Exp) (t : Typ) (h : Γ ⊢ .Binary (.Arith .EuclideanMod) b₁ b₂ : t):
+(Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
+  match h with
+  | WfTm.T_arith_mod_int _ _ _ h₁ h₂ | WfTm.T_arith_mod_nat _ _ _ h₁ h₂ => ⟨ h₁, h₂ ⟩
 
 lemma ty_if_inv (c b₁ b₂: Exp) (t : Typ) (h : Γ ⊢ .If c b₁ b₂ : t) : (Γ ⊢ c : Typ._Bool) ∧ (Γ ⊢ b₁ : t) ∧ (Γ ⊢ b₂ : t) :=
   match h with

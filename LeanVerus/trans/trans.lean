@@ -103,23 +103,33 @@ def trans_exp {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(ae
 
   | .Binary op e₁ e₂ =>
     -- Thread the axiom environment through both sub-expressions.
-    let ⟨t₁, aenv₁⟩ := trans_exp e₁ aenv
-    let ⟨t₂, aenv₂⟩ := trans_exp e₂ aenv₁
     match op with
     | .Arith op' =>
       match op' with
       -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L1253
       | .Add =>
-        match t₁, t₂ with
-        | ⟨AirSorts.Int, tm₁⟩, ⟨AirSorts.Int, tm₂⟩ =>
-          ⟨⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂⟩
-        | _, _ => sorry
+        match t with
+        | .Int .Int =>
+          have ⟨h₁, h₂⟩ := add_same_type e₁ e₂ (.Int .Int) hty
+          let ⟨t₁, aenv₁⟩ := trans_exp e₁ (.Int .Int) h₁ aenv
+          let ⟨t₂, aenv₂⟩ := trans_exp e₂ (.Int .Int) h₂ aenv₁
+          match t₁, t₂ with
+          | ⟨AirSorts.Int, tm₁⟩, ⟨AirSorts.Int, tm₂⟩ =>
+            ⟨⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂⟩
+          | _, _ => sorry
+        | .Int .Nat => sorry
+        | .Int (.U _) | .Int (.I _) | .Int .Char | .Int .USize | .Int .ISize
+        | .Float _ | .Array _ | .StrSlice | .TypParam _
+        | .SpecFn _ _ | .Decorated _ _ | .Tuple _ _ | .Struct _ _
+        | .Enum _ _ | .AnonymousClosure _ _ | .FnDef _ _ | .Air _ => nomatch hty
       | _ => sorry
-    | .And =>
-      match t₁, t₂ with
-      | ⟨AirSorts.Bool, tm₁⟩, ⟨AirSorts.Bool, tm₂⟩ =>
-        ⟨⟨Bool, binFuncTerm (airFunc.And 2) tm₁ tm₂⟩, aenv₂⟩
-      | _, _ => sorry
+    | .And => sorry
+      -- let ⟨t₁, aenv₁⟩ := trans_exp e₁ t aenv
+      -- let ⟨t₂, aenv₂⟩ := trans_exp e₂ t aenv₁
+      -- match t₁, t₂ with
+      -- | ⟨AirSorts.Bool, tm₁⟩, ⟨AirSorts.Bool, tm₂⟩ =>
+      --   ⟨⟨Bool, binFuncTerm (airFunc.And 2) tm₁ tm₂⟩, aenv₂⟩
+      -- | _, _ => sorry
     -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L1311
     | .Index _ => sorry
     | _ => sorry
