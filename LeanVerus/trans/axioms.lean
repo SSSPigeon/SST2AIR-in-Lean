@@ -188,6 +188,13 @@ def unbox_box_int : air_ast.Sentence :=
 
 end PloyCastingAxioms
 
+-- sst
+-- t₁: ∀ x y:int, x + y = y + x
+-- t₂: ∀ x:int, x = x
+
+-- model M, valuation v, axioms ⊨ t₁ =/<-> t₂, [t₁] = [t₂]
+
+
 -- TODO: look at type invariants at https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L603
 
 -- TODO: ask about this: https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L758
