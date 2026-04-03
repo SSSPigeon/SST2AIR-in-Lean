@@ -439,6 +439,46 @@ def isClosed (k : Nat := 0) (e: Exp): Bool:=
     isClosed k e)
   termination_by e
 
+/-- Count free variable occurrences: `Var i` with `i ≥ k`. -/
+def freeVarOccurrences (k : Nat) (e : Exp) : Nat :=
+  match e with
+  | Const _ => 0
+  | Var i => if i < k then 0 else 1
+  | Call _ _ exps _ =>
+    exps.attach.foldl (fun acc ⟨e, he⟩ =>
+      have : sizeOf e < sizeOf exps := by
+        have := List.sizeOf_lt_of_mem he
+        grind [Prod.mk.sizeOf_spec]
+      acc + freeVarOccurrences k e) 0
+  | CallLambda lam arg => freeVarOccurrences k lam + freeVarOccurrences k arg
+  | StructCtor _ fields =>
+    fields.attach.foldl (fun acc ⟨(_, e), h⟩ =>
+      have : sizeOf e < sizeOf fields := by
+        have := List.sizeOf_lt_of_mem h
+        grind [Prod.mk.sizeOf_spec]
+      acc + freeVarOccurrences k e) 0
+  | TupleCtor e₁ e₂ => freeVarOccurrences k e₁ + freeVarOccurrences k e₂
+  | Unary _ arg => freeVarOccurrences k arg
+  | Unaryr _ arg => freeVarOccurrences k arg
+  | Binary _ arg₁ arg₂ => freeVarOccurrences k arg₁ + freeVarOccurrences k arg₂
+  | If cond branch₁ branch₂ =>
+    freeVarOccurrences k cond + freeVarOccurrences k branch₁ + freeVarOccurrences k branch₂
+  | Let _ es body =>
+    freeVarOccurrences (k + es.length) body +
+    (es.attach).foldl (fun acc ⟨e, he⟩ =>
+      have : sizeOf e < sizeOf es := by
+        have := List.sizeOf_lt_of_mem he
+        grind [Prod.mk.sizeOf_spec]
+      acc + freeVarOccurrences k e) 0
+  | Quant _ _ body | Lambda _ body => freeVarOccurrences (k + 1) body
+  | ArrayLiteral elems =>
+    elems.attach.foldl (fun acc ⟨e, he⟩ =>
+      have : sizeOf e < sizeOf elems := by
+        have := List.sizeOf_lt_of_mem he
+        grind [Prod.mk.sizeOf_spec]
+      acc + freeVarOccurrences k e) 0
+termination_by e
+
 /-- The substitution acts via identity on indices strictly below `n`. -/
 def SbIsVar (σ : Nat → Exp) (n : Nat) :=
   ∀ ⦃i⦄, i < n → σ i = .Var i

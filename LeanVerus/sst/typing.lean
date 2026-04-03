@@ -7,7 +7,7 @@ import Mathlib.Tactic.Lift
 namespace typing
 open sst
 
-
+abbrev context := List Typ
 
 declare_syntax_cat judgment
 scoped syntax:50 term:51 : judgment
@@ -444,5 +444,33 @@ lemma ty_floatToBits_inv (f : Exp) (h : Γ ⊢ .Unary .FloatToBits f : t) : t = 
   match h with
   | WfTm.T_floatToBits32 _ _ h => ⟨ rfl, Or.inl h ⟩
   | WfTm.T_floatToBits64 _ _ h => ⟨ rfl, Or.inr h ⟩
+
+structure SymbolTable (Γ : context) where
+  get : Fin Γ.length → {e : Exp // e.isClosed 0}
+  well_typed  : ∀ i : Fin Γ.length, Γ ⊢ (get i).val : Γ.get i
+
+/-- Turn a symbol table into a substitution.
+    In-scope variables (`i < Γ.length`) map to their closed expressions;
+    out-of-scope variables map to themselves (identity). -/
+def SymbolTable.toSubst {Γ : context} (venv : SymbolTable Γ) : Nat → Exp :=
+  fun i =>
+    if h : i < Γ.length
+    then (venv.get ⟨i, h⟩).val
+    else .Var i
+
+/-- A substitution σ is well-typed from Γ to Δ if each σ i has the type that Γ says i should have. -/
+def WfSubst (σ : Nat → Exp) (Γ Δ : context) : Prop :=
+  ∀ i A, Lookup Γ i A → Δ ⊢ σ i : A
+
+theorem subst_typing_unchanged {Γ Δ : context} (σ : Nat → Exp)
+    (hσ : WfSubst σ Γ Δ) (e : Exp) (t : Typ) (h : Γ ⊢ e : t) :
+    Δ ⊢ e.subst_exp σ : t := by
+  induction h generalizing Δ σ
+  all_goals sorry
+
+theorem SymbolTable.WfSubst {Γ : context} (st : SymbolTable Γ) : WfSubst st.toSubst Γ [] := by sorry
+
+theorem SymbolTable.subst_typing {Γ : context} (st : SymbolTable Γ) (e : Exp) (t : Typ) (h : Γ ⊢ e : t) : [] ⊢ e.subst_exp st.toSubst : t :=
+  subst_typing_unchanged st.toSubst st.WfSubst e t h
 
 end typing

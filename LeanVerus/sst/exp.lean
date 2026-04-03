@@ -387,35 +387,7 @@ theorem Exp.induct {P : Exp → Prop}
   (_arrayliteral : ∀elems, (∀ _e ∈ elems, P _e) → P (.ArrayLiteral elems))
   : ∀ e, P e := by sorry
 
-/--
-  `e.freeVarsBelow n` holds when every free variable in `e` has a de Bruijn index strictly
-  less than `n`. Binders (`Let`, `Quant`, `Lambda`) increment `n` for their bodies.
--/
-def Exp.freeVarsBelow : Nat → Exp → Prop
-  | n, .Const _             => True
-  | n, .Var x               => x < n
-  | n, .Call _ _ exps _     => ∀ e ∈ exps, Exp.freeVarsBelow n e
-  | n, .CallLambda lam arg  => Exp.freeVarsBelow n lam ∧ Exp.freeVarsBelow n arg
-  | n, .StructCtor _ fields => ∀ p, (h : p ∈ fields) →
-      have h₁ : sizeOf p < sizeOf fields := List.sizeOf_lt_of_mem h
-      have h₂ : sizeOf p.2 < sizeOf p := by grind [Prod.mk.sizeOf_spec]
-      Exp.freeVarsBelow n p.2
-  | n, .TupleCtor e₁ e₂    => Exp.freeVarsBelow n e₁ ∧ Exp.freeVarsBelow n e₂
-  | n, .Unary _ arg         => Exp.freeVarsBelow n arg
-  | n, .Unaryr _ arg        => Exp.freeVarsBelow n arg
-  | n, .Binary _ a₁ a₂     => Exp.freeVarsBelow n a₁ ∧ Exp.freeVarsBelow n a₂
-  | n, .If c b₁ b₂          => Exp.freeVarsBelow n c ∧ Exp.freeVarsBelow n b₁ ∧ Exp.freeVarsBelow n b₂
-  | n, .Let tys es body     => (∀ e ∈ es, Exp.freeVarsBelow n e) ∧ Exp.freeVarsBelow (n + tys.length) body
-  | n, .Quant _ _ body      => Exp.freeVarsBelow (n + 1) body
-  | n, .Lambda _ exp        => Exp.freeVarsBelow (n + 1) exp
-  | n, .ArrayLiteral elems  => ∀ e ∈ elems, Exp.freeVarsBelow n e
-termination_by n e => sizeOf e
 
-abbrev context := List Typ
 
-/-- A closed expression has no free variables. -/
-def Exp.closed (Γ: context) (e : Exp) : Prop := e.freeVarsBelow Γ.length
-
-abbrev symbol_table (Γ : context) := List {e: Exp // e.closed Γ}
 
 register_simp_attr autosubst
