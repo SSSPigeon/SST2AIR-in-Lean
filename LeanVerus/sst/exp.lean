@@ -413,11 +413,9 @@ termination_by n e => sizeOf e
 
 abbrev context := List Typ
 
-variable (Γ : context)
-
 /-- A closed expression has no free variables. -/
 def Exp.closed (Γ: context) (e : Exp) : Prop := e.freeVarsBelow Γ.length
 
-abbrev symbol_table := List {e: Exp // e.closed Γ}
+abbrev symbol_table (Γ : context) := List {e: Exp // e.closed Γ}
 
 register_simp_attr autosubst

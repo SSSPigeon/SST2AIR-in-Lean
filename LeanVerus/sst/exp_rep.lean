@@ -24,6 +24,8 @@ axiom array_out_of_bound_unspecified_value : {t : Type} → List t → Nat → t
 
 end exception
 
+#check symbol_table
+-- (venv: val_vars tenv Γ dom_aux)
 noncomputable
 def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : Γ ⊢ e : t): typ_interp tenv dom_aux t:=
   match e with

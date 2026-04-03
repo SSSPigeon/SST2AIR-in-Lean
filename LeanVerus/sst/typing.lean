@@ -7,7 +7,6 @@ import Mathlib.Tactic.Lift
 namespace typing
 open sst
 
-abbrev context := List Typ
 
 
 declare_syntax_cat judgment
