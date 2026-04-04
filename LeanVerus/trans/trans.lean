@@ -34,6 +34,8 @@ example : TransVarFam Poly = _root_.Nat := by simp
 /-- A translated term paired with its AIR sort. -/
 abbrev TransTerm := Σ s : AirSorts, air_ast.Term TransVarFam s
 
+abbrev TransFormula := air_ast.Formula TransVarFam
+
 /-- The set of sentences (axioms) accumulated during translation. -/
 abbrev TransAxioms := air_ast.Theory
 
@@ -74,32 +76,31 @@ def trans_typ (t : sst.Typ): AirSorts :=
   | .AnonymousClosure (typs: List Typ) (typ: Typ) => sorry
 
 -- TODO: add a proof of trans_typ t = trans_exp e t hty aenv).1.1
-def trans_exp' {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(aenv : TransAxioms) : TransTerm × TransAxioms :=
+def trans_exp' {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(aenv : TransAxioms) : (TransTerm ⊕ TransFormula) × TransAxioms :=
 -- air_ast.Term TransVarFam (trans_typ t)
   match e with
   | .Const c =>
     -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L749
     match c with
     | .Bool b =>
-      ⟨⟨Bool, constTerm (if b then airFunc.True else airFunc.False)⟩, aenv⟩
+      ⟨.inl ⟨Bool, constTerm (if b then airFunc.True else airFunc.False)⟩, aenv⟩
     -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L296
     | .Int i =>
       if i ≥ 0 then
-        ⟨⟨Int, constTerm (airFunc.Nat i.repr)⟩, aenv⟩
+        ⟨.inl ⟨Int, constTerm (airFunc.Nat i.repr)⟩, aenv⟩
       else
-        ⟨⟨Int, binFuncTerm (airFunc.Sub 2) (constTerm (airFunc.Nat "0"))
+        ⟨.inl ⟨Int, binFuncTerm (airFunc.Sub 2) (constTerm (airFunc.Nat "0"))
                                     (constTerm (airFunc.Nat (-i).repr))⟩, aenv⟩
     | .Char c =>
-      ⟨⟨Int, constTerm (airFunc.Nat (toString c.val))⟩, aenv⟩
+      ⟨.inl ⟨Int, constTerm (airFunc.Nat (toString c.val))⟩, aenv⟩
     | .Float32 f =>
-      ⟨⟨Int, constTerm (airFunc.Nat (toString f))⟩, aenv⟩
+      ⟨.inl ⟨Int, constTerm (airFunc.Nat (toString f))⟩, aenv⟩
     | .Float64 f =>
-      ⟨⟨Int, constTerm (airFunc.Nat (toString f))⟩, aenv⟩
+      ⟨.inl ⟨Int, constTerm (airFunc.Nat (toString f))⟩, aenv⟩
     | .StrSlice _ => sorry
 
   -- TODO
-  | .Var idx => ⟨⟨Int, Term.var AirSorts.Int idx⟩, aenv⟩
-
+  | .Var idx => ⟨.inl ⟨Int, Term.var AirSorts.Int idx⟩, aenv⟩
   | .Binary op e₁ e₂ =>
     -- Thread the axiom environment through both sub-expressions.
     match op with
