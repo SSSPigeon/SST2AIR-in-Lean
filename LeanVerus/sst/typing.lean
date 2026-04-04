@@ -447,7 +447,7 @@ lemma ty_floatToBits_inv (f : Exp) (h : Γ ⊢ .Unary .FloatToBits f : t) : t = 
 
 structure SymbolTable (Γ : context) where
   get : Fin Γ.length → {e : Exp // e.isClosed 0}
-  well_typed  : ∀ i : Fin Γ.length, Γ ⊢ (get i).val : Γ.get i
+  well_typed  : ∀ i : Fin Γ.length, [] ⊢ (get i).val : Γ.get i
 
 /-- Turn a symbol table into a substitution.
     In-scope variables (`i < Γ.length`) map to their closed expressions;
@@ -457,6 +457,14 @@ def SymbolTable.toSubst {Γ : context} (venv : SymbolTable Γ) : Nat → Exp :=
     if h : i < Γ.length
     then (venv.get ⟨i, h⟩).val
     else .Var i
+
+lemma lookup_get_eq {Γ : context} {i : Nat} {A : Typ} (h : Lookup Γ i A) (hi : i < Γ.length) :
+    A = Γ.get ⟨i, hi⟩ := by
+  induction h with
+  | zero Γ A => rfl
+  | succ Γ A i B _ ih =>
+    simp
+    exact ih (by simpa using hi)
 
 /-- A substitution σ is well-typed from Γ to Δ if each σ i has the type that Γ says i should have. -/
 def WfSubst (σ : Nat → Exp) (Γ Δ : context) : Prop :=
@@ -468,7 +476,24 @@ theorem subst_typing_unchanged {Γ Δ : context} (σ : Nat → Exp)
   induction h generalizing Δ σ
   all_goals sorry
 
-theorem SymbolTable.WfSubst {Γ : context} (st : SymbolTable Γ) : WfSubst st.toSubst Γ [] := by sorry
+theorem SymbolTable.WfSubst {Γ : context} (st : SymbolTable Γ) : WfSubst st.toSubst Γ [] := by
+  unfold typing.WfSubst
+  intros i A hlookup
+  simp [SymbolTable.toSubst]
+  split_ifs
+  case pos h =>
+    have hty := st.well_typed ⟨i, h⟩
+    rw [lookup_get_eq hlookup h]
+    exact hty
+  case neg h =>
+    have : i < Γ.length := by
+      clear h st
+      induction hlookup with
+      | zero _ _ => simp
+      | succ Γ A i B h ih =>
+        simp
+        exact ih
+    contradiction
 
 theorem SymbolTable.subst_typing {Γ : context} (st : SymbolTable Γ) (e : Exp) (t : Typ) (h : Γ ⊢ e : t) : [] ⊢ e.subst_exp st.toSubst : t :=
   subst_typing_unchanged st.toSubst st.WfSubst e t h
