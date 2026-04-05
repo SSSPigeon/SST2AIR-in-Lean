@@ -75,7 +75,20 @@ def trans_typ (t : sst.Typ): AirSorts :=
   | .Enum (name : Ident) (params : List Typ) => sorry
   | .AnonymousClosure (typs: List Typ) (typ: Typ) => sorry
 
+-- ⊤
 abbrev truth: TransFormula := imp falsum falsum
+-- Boolean connectives derived from falsum and imp
+-- ¬p  ≡  p → ⊥
+abbrev bnot (p : TransFormula) : TransFormula := imp p falsum
+-- p ∧ q  ≡  ¬(p → ¬q)  ≡  (p → (q → ⊥)) → ⊥
+abbrev band (p q : TransFormula) : TransFormula := bnot (imp p (bnot q))
+-- p ∨ q  ≡  ¬p → q
+abbrev bor (p q : TransFormula) : TransFormula := imp (bnot p) q
+-- p ↔ q  ≡  (p → q) ∧ (q → p)
+abbrev biff (p q : TransFormula) : TransFormula := band (imp p q) (imp q p)
+-- ∃x:s, p(x)  ≡  ¬∀x:s, ¬p(x)
+-- abbrev bexists {s : AirSorts} (f : BoundedFormula air_ast TransVarFam [s]) : TransFormula :=
+--   bnot (all (imp f falsum))
 
 -- TODO: add a proof of trans_typ t = trans_exp e t hty aenv).1.1
 def trans_exp' {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(aenv : TransAxioms) : (TransTerm ⊕ TransFormula) × TransAxioms :=
