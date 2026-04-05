@@ -9,7 +9,13 @@ open sst typing
 
 variable (tenv : typ_env)  (dom_aux : ClosedTyp → Type)
 
-def val_vars tenv (Γ: context) dom_aux :=  (i : Nat) → (_ : i < Γ.length) → typ_interp tenv dom_aux Γ[i] --⊕ ExpError
+def val_vars (Γ: context) dom_aux :=  (i : Nat) → (_ : i < Γ.length) → typ_interp tenv dom_aux Γ[i] --⊕ ExpError
+
+def extend_venv {Γ: context} (venv: val_vars tenv Γ dom_aux) (t : Typ) (v : typ_interp tenv dom_aux t) : val_vars tenv (t :: Γ) dom_aux :=
+  fun i h =>
+    match i with
+    | 0 => v
+    | i + 1 => venv i (Nat.lt_of_succ_lt_succ h)
 
 section exception
 
@@ -269,7 +275,23 @@ def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : 
 
 
   | .Let (tys : List Typ) (es : List Exp) (body : Exp) => sorry
-  | .Quant (q : Quant) (var : Typ) (body : Exp) => sorry
+  | .Quant (q : Quant) (var : Typ) (body : Exp) =>
+    match h: q with
+    -- lemma ty_quant_inv (A : Typ)(e : Exp)(q : Quant)(h : Γ ⊢ .Quant q A e : t) : t = ._Bool ∧ (A :: Γ ⊢ e : ._Bool) :=
+    | .Forall =>
+      let hty_inv := ty_quant_inv var body q (h ▸ hty)
+      let hty_body := hty_inv.2
+      let prop : Prop := ∀ (x : typ_interp tenv dom_aux var),
+        cast interp_bool (exp_rep (var :: Γ) tenv (extend_venv tenv dom_aux venv var x) ._Bool body hty_body) = true
+      cast_typ_interp hty_inv.1.symm (cast interp_bool.symm
+        (@Decidable.decide prop (Classical.propDecidable prop)))
+    | .Exists =>
+      let hty_inv := ty_quant_inv var body q (h ▸ hty)
+      let hty_body := hty_inv.2
+      let prop : Prop := ∃ (x : typ_interp tenv dom_aux var),
+        cast interp_bool (exp_rep (var :: Γ) tenv (extend_venv tenv dom_aux venv var x) ._Bool body hty_body) = true
+      cast_typ_interp hty_inv.1.symm (cast interp_bool.symm
+        (@Decidable.decide prop (Classical.propDecidable prop)))
 
 
 

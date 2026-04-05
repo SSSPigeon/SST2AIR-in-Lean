@@ -192,7 +192,7 @@ inductive WfTm : context → Typ → Exp → Prop
     ∀ Γ A e B, A :: Γ ⊢ e : B → Γ ⊢ .Lambda A e : Typ.SpecFn [A] B
 
   | T_quant :
-    ∀ Γ A e B, A :: Γ ⊢ e : B → Γ ⊢ .Quant _ A e : Typ._Bool
+    ∀ Γ A e, A :: Γ ⊢ e : ._Bool → Γ ⊢ .Quant _ A e : Typ._Bool
 
   | T_call :
     ∀ Γ fn (l_ty : List Typ) l_exp ty, (_ : l_ty.length = l_exp.length) →
@@ -444,6 +444,10 @@ lemma ty_floatToBits_inv (f : Exp) (h : Γ ⊢ .Unary .FloatToBits f : t) : t = 
   match h with
   | WfTm.T_floatToBits32 _ _ h => ⟨ rfl, Or.inl h ⟩
   | WfTm.T_floatToBits64 _ _ h => ⟨ rfl, Or.inr h ⟩
+
+lemma ty_quant_inv (A : Typ)(e : Exp)(q : Quant)(h : Γ ⊢ .Quant q A e : t) : t = ._Bool ∧ (A :: Γ ⊢ e : ._Bool) :=
+  match h with
+  | WfTm.T_quant _ A e h' => ⟨ rfl, h' ⟩
 
 structure SymbolTable (Γ : context) where
   get : Fin Γ.length → {e : Exp // e.isClosed 0}
