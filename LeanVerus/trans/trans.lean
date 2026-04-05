@@ -4,7 +4,7 @@ import LeanVerus.Sst.Exp
 import LeanVerus.Air_ast.«Air-ast»
 import LeanVerus.Trans.Axioms
 
-open sst typing MSFirstOrder MSLanguage AirSorts airFunc
+open sst typing MSFirstOrder MSLanguage AirSorts airFunc BoundedFormula
 
 /--
   In Why3-Coq,
@@ -75,6 +75,8 @@ def trans_typ (t : sst.Typ): AirSorts :=
   | .Enum (name : Ident) (params : List Typ) => sorry
   | .AnonymousClosure (typs: List Typ) (typ: Typ) => sorry
 
+abbrev truth: TransFormula := imp falsum falsum
+
 -- TODO: add a proof of trans_typ t = trans_exp e t hty aenv).1.1
 def trans_exp' {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(aenv : TransAxioms) : (TransTerm ⊕ TransFormula) × TransAxioms :=
 -- air_ast.Term TransVarFam (trans_typ t)
@@ -83,7 +85,9 @@ def trans_exp' {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(a
     -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L749
     match c with
     | .Bool b =>
-      ⟨.inl ⟨Bool, constTerm (if b then airFunc.True else airFunc.False)⟩, aenv⟩
+      if b then ⟨.inr truth, aenv⟩ else ⟨.inr falsum, aenv⟩
+
+      --⟨.inl ⟨Bool, constTerm (if b then airFunc.True else airFunc.False)⟩, aenv⟩
     -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L296
     | .Int i =>
       if i ≥ 0 then
@@ -114,29 +118,30 @@ def trans_exp' {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(a
           let ⟨t₁, aenv₁⟩ := trans_exp' e₁ (.Int .Int) h₁ aenv
           let ⟨t₂, aenv₂⟩ := trans_exp' e₂ (.Int .Int) h₂ aenv₁
           match t₁, t₂ with
-          | ⟨AirSorts.Int, tm₁⟩, ⟨AirSorts.Int, tm₂⟩ =>
-            ⟨⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂⟩
+          | .inl ⟨AirSorts.Int, tm₁⟩, .inl ⟨AirSorts.Int, tm₂⟩ =>
+            ⟨.inl ⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂⟩
           | _, _ => unreachable!
         | .Int .Nat =>
           have ⟨h₁, h₂⟩ := add_same_type e₁ e₂ (.Int .Nat) hty
           let ⟨t₁, aenv₁⟩ := trans_exp' e₁ (.Int .Nat) h₁ aenv
           let ⟨t₂, aenv₂⟩ := trans_exp' e₂ (.Int .Nat) h₂ aenv₁
           match t₁, t₂ with
-          | ⟨AirSorts.Int, tm₁⟩, ⟨AirSorts.Int, tm₂⟩ =>
-            ⟨⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂⟩
+          | .inl ⟨AirSorts.Int, tm₁⟩, .inl ⟨AirSorts.Int, tm₂⟩ =>
+            ⟨.inl ⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂⟩
           | _, _ => sorry
         | .Int (.U _) | .Int (.I _) | .Int .Char | .Int .USize | .Int .ISize
         | .Float _ | .Array _ | .StrSlice | .TypParam _
         | .SpecFn _ _ | .Decorated _ _ | .Tuple _ _ | .Struct _ _
         | .Enum _ _ | .AnonymousClosure _ _ | .FnDef _ _ | .Air _ => nomatch hty
       | _ => sorry
-    | .And => sorry
-      -- let ⟨t₁, aenv₁⟩ := trans_exp e₁ t aenv
-      -- let ⟨t₂, aenv₂⟩ := trans_exp e₂ t aenv₁
-      -- match t₁, t₂ with
-      -- | ⟨AirSorts.Bool, tm₁⟩, ⟨AirSorts.Bool, tm₂⟩ =>
-      --   ⟨⟨Bool, binFuncTerm (airFunc.And 2) tm₁ tm₂⟩, aenv₂⟩
-      -- | _, _ => sorry
+    | .And =>
+      have ⟨h₁, h₂⟩ := and_same_type e₁ e₂ t hty
+      let ⟨t₁, aenv₁⟩ := trans_exp' e₁ t h₁ aenv
+      let ⟨t₂, aenv₂⟩ := trans_exp' e₂ t h₂ aenv₁
+      match t₁, t₂ with
+      | .inl ⟨AirSorts.Bool, tm₁⟩, .inl ⟨AirSorts.Bool, tm₂⟩ =>
+        ⟨.inl ⟨Bool, binFuncTerm (airFunc.And 2) tm₁ tm₂⟩, aenv₂⟩
+      | _, _ => sorry
     -- https://github.com/verus-lang/verus/blob/main/source/vir/src/sst_to_air.rs#L1311
     | .Index _ => sorry
     | _ => sorry

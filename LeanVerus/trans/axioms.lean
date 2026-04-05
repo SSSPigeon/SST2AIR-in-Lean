@@ -206,6 +206,7 @@ def preludeAxioms : air_ast.Theory :=
 
 end PreludeAxioms
 
+example : air_ast.Sentence := falsum
 
 section TransAxioms
 end TransAxioms
