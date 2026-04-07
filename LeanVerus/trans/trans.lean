@@ -90,8 +90,7 @@ abbrev biff (p q : TransFormula) : TransFormula := band (imp p q) (imp q p)
 -- abbrev bexists {s : AirSorts} (f : BoundedFormula air_ast TransVarFam [s]) : TransFormula :=
 --   bnot (all (imp f falsum))
 
--- TODO: add a proof of trans_typ t = trans_exp e t hty aenv).1.1
-def trans_exp' {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(aenv : TransAxioms) : (TransTerm ⊕ TransFormula) × TransAxioms :=
+def trans_exp {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(aenv : TransAxioms) : (TransTerm ⊕ TransFormula) × TransAxioms :=
 -- air_ast.Term TransVarFam (trans_typ t)
   match e with
   | .Const c =>
@@ -128,16 +127,16 @@ def trans_exp' {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(a
         match t with
         | .Int .Int =>
           have ⟨h₁, h₂⟩ := add_same_type e₁ e₂ (.Int .Int) hty
-          let ⟨t₁, aenv₁⟩ := trans_exp' e₁ (.Int .Int) h₁ aenv
-          let ⟨t₂, aenv₂⟩ := trans_exp' e₂ (.Int .Int) h₂ aenv₁
+          let ⟨t₁, aenv₁⟩ := trans_exp e₁ (.Int .Int) h₁ aenv
+          let ⟨t₂, aenv₂⟩ := trans_exp e₂ (.Int .Int) h₂ aenv₁
           match t₁, t₂ with
           | .inl ⟨AirSorts.Int, tm₁⟩, .inl ⟨AirSorts.Int, tm₂⟩ =>
             ⟨.inl ⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂⟩
           | _, _ => unreachable!
         | .Int .Nat =>
           have ⟨h₁, h₂⟩ := add_same_type e₁ e₂ (.Int .Nat) hty
-          let ⟨t₁, aenv₁⟩ := trans_exp' e₁ (.Int .Nat) h₁ aenv
-          let ⟨t₂, aenv₂⟩ := trans_exp' e₂ (.Int .Nat) h₂ aenv₁
+          let ⟨t₁, aenv₁⟩ := trans_exp e₁ (.Int .Nat) h₁ aenv
+          let ⟨t₂, aenv₂⟩ := trans_exp e₂ (.Int .Nat) h₂ aenv₁
           match t₁, t₂ with
           | .inl ⟨AirSorts.Int, tm₁⟩, .inl ⟨AirSorts.Int, tm₂⟩ =>
             ⟨.inl ⟨Int, binFuncTerm airFunc.ADD tm₁ tm₂⟩, aenv₂⟩
@@ -149,8 +148,8 @@ def trans_exp' {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(a
       | _ => sorry
     | .And =>
       have ⟨h₁, h₂⟩ := and_same_type e₁ e₂ t hty
-      let ⟨t₁, aenv₁⟩ := trans_exp' e₁ t h₁ aenv
-      let ⟨t₂, aenv₂⟩ := trans_exp' e₂ t h₂ aenv₁
+      let ⟨t₁, aenv₁⟩ := trans_exp e₁ t h₁ aenv
+      let ⟨t₂, aenv₂⟩ := trans_exp e₂ t h₂ aenv₁
       match t₁, t₂ with
       | .inl ⟨AirSorts.Bool, tm₁⟩, .inl ⟨AirSorts.Bool, tm₂⟩ =>
         ⟨.inl ⟨Bool, binFuncTerm (airFunc.And 2) tm₁ tm₂⟩, aenv₂⟩
@@ -162,7 +161,6 @@ def trans_exp' {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(a
   | _ => sorry
 
 
-def trans_exp {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(aenv : TransAxioms) : AirSorts × air_ast.Term TransVarFam (trans_typ t) × TransAxioms := sorry
 
-/-- The AIR sort of a translated expression equals `trans_typ` of its SST type. -/
-def trans_exp_sort {Γ : context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t) (aenv : TransAxioms) : (trans_exp e t hty aenv).1 = trans_typ t := by sorry
+-- /-- The AIR sort of a translated expression equals `trans_typ` of its SST type. -/
+-- def trans_exp_sort {Γ : context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t) (aenv : TransAxioms) : (trans_exp e t hty aenv).1 = trans_typ t := by sorry
