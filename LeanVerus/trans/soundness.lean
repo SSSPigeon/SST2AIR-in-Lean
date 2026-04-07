@@ -15,14 +15,8 @@ abbrev AirMod.toFam (P T F : Type) [AirMod P T F] : AirSorts → Type := AirCarr
 
 variable (tenv : typ_env) (dom_aux : ClosedTyp → Type)
 
-lemma trans_sort_correspondence {Γ : context} {t : Typ}
-  (e₁ e₂ : sst.Exp)
-  (hty₁ : Γ ⊢ e₁ : t) (hty₂ : Γ ⊢ e₂ : t):
-  (trans_exp e₁ t hty₁ preludeAxioms).1 = (trans_exp e₂ t hty₂ preludeAxioms).1 := sorry
 
 -- TODO: define a toy example
-
-
 
 /-- Semantic equivalence of two AIR results (`.1` of `trans_exp`) under a
     variable assignment.  Handles both result shapes:
@@ -31,14 +25,14 @@ lemma trans_sort_correspondence {Γ : context} {t : Typ}
       evaluated values agree after aligning sorts.
     Mismatched shapes are `falsum`; for a type-directed translation of two
     expressions at the same SST type this case never arises. -/
-def AirResultEquiv
-    (r₁ r₂ : TransTerm ⊕ TransFormula) : TransFormula :=
-  match r₁, r₂ with
+def AirResultEquiv {Γ : context} {t : Typ}
+    (e₁ e₂ : sst.Exp) (hty₁ : Γ ⊢ e₁ : t) (hty₂ : Γ ⊢ e₂ : t) : TransFormula :=
+  match (trans_exp e₁ t hty₁ preludeAxioms).1, (trans_exp e₂ t hty₂ preludeAxioms).1 with
   | .inr φ₁, .inr φ₂ =>
       -- Both are propositions (e.g. boolean expressions): logical equivalence
       biff φ₁ φ₂
   | .inl ⟨s₁, tm₁⟩, .inl ⟨s₂, tm₂⟩ =>
-      -- Both are terms (e.g. integer expressions): sort-compatible value equality
+      -- Both are terms (e.g. integer expressions): value equality
       have hty : s₁ = s₂ := by sorry
       Term.equal tm₁ (hty ▸ tm₂)
   | _, _ => falsum
@@ -53,9 +47,7 @@ theorem trans_sound'
       AirMod.toFam P T F ⊨
         (trans_exp e₁ t hty₁ aenv).2 ∪ (trans_exp e₂ t hty₂ aenv).2 →
       ∀ (v : TransVarFam →ₛ AirMod.toFam P T F),
-        (AirResultEquiv
-          (trans_exp e₁ t hty₁ aenv).1
-          (trans_exp e₂ t hty₂ aenv).1).Realize v) :
+        (AirResultEquiv e₁ e₂ hty₁ hty₂).Realize v) :
     -- The SST denotations agree for all SST variable environments:
     ∀ (venv : val_vars tenv Γ dom_aux),
       -- TODO: relate the AIR variable assignment v to the SST environment venv
