@@ -16,7 +16,28 @@ abbrev AirMod.toFam (P T F : Type) [AirMod P T F] : AirSorts → Type := AirCarr
 variable (tenv : typ_env) (dom_aux : ClosedTyp → Type)
 
 
+
 -- TODO: define a toy example
+
+/-- Encoding from SST semantic values to AIR carrier values at the translated sort.
+    For the base types:
+      - Bool       → Bool  (identity)
+      - Int .Int   → Int   (identity)
+      - Int .Nat   → Int   (Int.ofNat coercion)
+      - Int .Char  → Int   (Char.val coercion)
+    For polymorphic/compound types the encoding is left as a `sorry`. -/
+noncomputable def encode (t : Typ) {P T F : Type} :
+    typ_interp tenv dom_aux t → AirCarrier P T F (trans_typ t) := sorry
+
+/-- An AIR variable assignment `v` is *coherent* with an SST valuation `venv` when,
+    for every de Bruijn index `i` in context `Γ`, the AIR value
+      `v (trans_typ Γ[i]) i : AirCarrier P T F (trans_typ Γ[i])`
+    equals the encoding of the SST value `venv i hi`. -/
+def CoherentAssignment {Γ : context}
+    (venv : val_vars tenv Γ dom_aux) {P T F : Type}
+    (v : TransVarFam →ₛ AirCarrier P T F) : Prop :=
+  ∀ (i : Nat) (hi : i < Γ.length),
+    v (trans_typ Γ[i]) i = encode tenv dom_aux Γ[i] (venv i hi)
 
 /-- Semantic equivalence of two AIR results (`.1` of `trans_exp`) under a
     variable assignment.  Handles both result shapes:
@@ -37,18 +58,19 @@ def AirResultEquiv {Γ : context} {t : Typ}
       Term.equal tm₁ (hty ▸ tm₂)
   | _, _ => falsum
 
-theorem trans_sound'
-    {Γ : context} {t : Typ} {dom_aux : ClosedTyp → Type}
-    (e₁ e₂ : sst.Exp)
-    (hty₁ : Γ ⊢ e₁ : t) (hty₂ : Γ ⊢ e₂ : t)
-    (aenv : TransAxioms)
-    -- In every AIR model satisfying the generated axioms, the translations are equivalent:
-    (h_air : ∀ (P T F : Type) [AirMod P T F],
+theorem trans_sound
+  {Γ : context} {t : Typ} {dom_aux : ClosedTyp → Type}
+  (e₁ e₂ : sst.Exp)
+  (hty₁ : Γ ⊢ e₁ : t) (hty₂ : Γ ⊢ e₂ : t)
+  (aenv : TransAxioms)
+  (venv : val_vars tenv Γ dom_aux)
+  -- In every AIR model, for every AIR assignment coherent with `venv`,
+  -- if the model satisfies the generated axioms, the translations are equivalent:
+  (h_air : ∀ (P T F : Type) [AirMod P T F]
+      (v : TransVarFam →ₛ AirMod.toFam P T F),
+      CoherentAssignment tenv dom_aux venv v →
       AirMod.toFam P T F ⊨
         (trans_exp e₁ t hty₁ aenv).2 ∪ (trans_exp e₂ t hty₂ aenv).2 →
-      ∀ (v : TransVarFam →ₛ AirMod.toFam P T F),
-        (AirResultEquiv e₁ e₂ hty₁ hty₂).Realize v) :
-    -- The SST denotations agree for all SST variable environments:
-    ∀ (venv : val_vars tenv Γ dom_aux),
-      -- TODO: relate the AIR variable assignment v to the SST environment venv
-      exp_rep dom_aux Γ tenv venv t e₁ hty₁ = exp_rep dom_aux Γ tenv venv t e₂ hty₂ := sorry
+      (AirResultEquiv e₁ e₂ hty₁ hty₂).Realize v) :
+  -- The SST denotations agree:
+  exp_rep dom_aux Γ tenv venv t e₁ hty₁ = exp_rep dom_aux Γ tenv venv t e₂ hty₂ := sorry
