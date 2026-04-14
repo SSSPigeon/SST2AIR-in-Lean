@@ -30,8 +30,8 @@ variable (tenv : typ_env) (dom_aux : ClosedTyp → Type)
     For polymorphic/compound types the encoding is left as a `sorry`. -/
 noncomputable def encode (t : Typ) {P T F : Type}
     /- Boxing function: maps any SST value at a closed type into the Poly carrier `P`.
-       Required for type-parameter variables; should agree with AIR's `ofI`/`ofB`
-       on the base types (left as a TODO coherence condition). -/
+    Required for type-parameter variables; should agree with AIR's `ofI`/`ofB`
+    on the base types (left as a TODO coherence condition). -/
     (box : ∀ (ct : ClosedTyp), domain dom_aux ct → P) :
     typ_interp tenv dom_aux t → AirCarrier P T F (trans_typ t) :=
   match t with
@@ -50,9 +50,7 @@ noncomputable def encode (t : Typ) {P T F : Type}
   | .AnonymousClosure _ _ | .SpecFn _ _ | .FnDef _ _ | .Air _ => sorry
 
 /-- An AIR variable assignment `v` is *coherent* with an SST valuation `venv` when,
-  for every de Bruijn index `i` in context `Γ`, the AIR value
-    `v (trans_typ Γ[i]) i : AirCarrier P T F `
-  equals the encoding of the SST value `venv i hi`
+  for every de Bruijn index `i` in context `Γ`, the AIR value `v (trans_typ Γ[i]) i : AirCarrier P T F ` equals the encoding of the SST value `venv i hi`
 -/
 def CoherentAssignment {Γ : context}
     (venv : val_vars tenv Γ dom_aux) {P T F : Type}
@@ -62,11 +60,11 @@ def CoherentAssignment {Γ : context}
     v (trans_typ Γ[i]) i = encode tenv dom_aux Γ[i] box (venv i hi)
 
 /-- A boxing function `box` is *well-formed* with respect to an AIR model `[AirMod P T F]`
-    when it agrees with the model's boxing function symbols on the concrete base types:
-    - `ofB : airFunc [Bool] Poly` for boolean values
-    - `ofI : airFunc [Int] Poly`  for integer values (Int, Nat, Char)
-    We use `domain dom_aux ⟨t, _⟩` in the quantifiers to avoid the name clash with
-    `AirSorts.Bool` / `AirSorts.Int` introduced by `open AirSorts`. -/
+when it agrees with the model's boxing function symbols on the concrete base types:
+  - `ofB : airFunc [Bool] Poly` for boolean values
+  - `ofI : airFunc [Int] Poly`  for integer values (Int, Nat, Char)
+  We use `domain dom_aux ⟨t, _⟩` in the quantifiers to avoid the name clash with
+  `AirSorts.Bool` / `AirSorts.Int` introduced by `open AirSorts`. -/
 def WellFormedBox {P T F : Type} [M : AirMod P T F] (dom_aux : ClosedTyp → Type)
     (box : ∀ (ct : ClosedTyp), domain dom_aux ct → P) : Prop :=
   -- `domain` uses well-founded recursion so does not reduce definitionally;
@@ -113,11 +111,11 @@ theorem trans_sound
   -- In every AIR model, for every AIR assignment coherent with `venv`,
   -- if the model satisfies the generated axioms, the translations are equivalent:
   (h_air : ∀ (P T F : Type) [AirMod P T F]
-      (v : TransVarFam →ₛ AirMod.toFam P T F)
-      (box : ∀ (ct : ClosedTyp), domain dom_aux ct → P),
-      CoherentAssignment tenv dom_aux venv box v →
-      AirMod.toFam P T F ⊨
-        (trans_exp e₁ t hty₁ aenv).2 ∪ (trans_exp e₂ t hty₂ aenv).2 →
-      (AirResultEquiv e₁ e₂ hty₁ hty₂).Realize v) :
+  (v : TransVarFam →ₛ AirMod.toFam P T F)
+  (box : ∀ (ct : ClosedTyp), domain dom_aux ct → P),
+  CoherentAssignment tenv dom_aux venv box v →
+  AirMod.toFam P T F ⊨
+    (trans_exp e₁ t hty₁ aenv).2 ∪ (trans_exp e₂ t hty₂ aenv).2 →
+  (AirResultEquiv e₁ e₂ hty₁ hty₂).Realize v) :
   -- The SST denotations agree:
   exp_rep dom_aux Γ tenv venv t e₁ hty₁ = exp_rep dom_aux Γ tenv venv t e₂ hty₂ := sorry
