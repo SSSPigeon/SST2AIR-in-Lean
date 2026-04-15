@@ -118,17 +118,18 @@ def trans_exp {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(ae
   | .Var idx =>
     match t with
     | .TypParam p =>
-      -- v has sort Poly; add axiom (has_type v (TypParamConst p))
+      -- v has sort Poly; add sentence (has_type (VarConst idx) (TypParamConst p))
+      -- Sentences must be ground, so we use VarConst idx rather than Term.var Poly idx.
+      -- The soundness proof connects VarConst idx to the actual variable assignment.
       let v_term : air_ast.Term TransVarFam Poly := Term.var Poly idx
-      let T_term : air_ast.Term TransVarFam TYPE := constTerm (airFunc.TypParamConst p)
-      let ht_axiom : air_ast.Sentence := sorry
-        -- equal
-        --   (Term.func [Poly, TYPE] Bool airFunc.HAS_TYPE
-        --     fun i => match i with
-        --       | ⟨0, _⟩     => sorry
-        --       | ⟨1, _⟩     => sorry
-        --       | ⟨_ + 2, h⟩ => absurd h (by simp))
-        --   (constTerm airFunc.True)
+      let ht_axiom : air_ast.Sentence :=
+        equal
+          (Term.func [Poly, TYPE] Bool airFunc.HAS_TYPE
+            fun i => match i with
+              | ⟨0, _⟩     => Term.func [] Poly (airFunc.VarConst idx) (fun j => Fin.elim0 j)
+              | ⟨1, _⟩     => Term.func [] TYPE (airFunc.TypParamConst p) (fun j => Fin.elim0 j)
+              | ⟨_ + 2, h⟩ => absurd h (by simp))
+          (Term.func [] AirSorts.Bool airFunc.True (fun j => Fin.elim0 j))
       ⟨.inl ⟨Poly, v_term⟩, aenv ∪ {ht_axiom}⟩
     | _ =>
       -- For all concrete types the sort is determined by trans_typ

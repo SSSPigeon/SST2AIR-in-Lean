@@ -94,6 +94,9 @@ inductive airFunc : List AirSorts → AirSorts → Type
   | CONST_BOOL : airFunc [Bool] TYPE
   -- Nullary TYPE constant for a named type parameter (e.g. `T` in `fn foo<T>`)
   | TypParamConst : (name : String) → airFunc [] TYPE
+  -- Poly constant representing the SST variable at de Bruijn index idx.
+  -- Used as a ground term inside Sentences (where Term.var is unavailable).
+  | VarConst : (idx : Nat) → airFunc [] Poly
   -- has_type(v, T): asserts that Poly value v has type T
   | HAS_TYPE : airFunc [Poly, TYPE] Bool
 
