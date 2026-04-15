@@ -15,9 +15,12 @@ inductive TypeError : Type where
 inductive ExpError : Type where
   | RuntimeErr
 
+-- def domain (type_env : String → Type) (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
+
 -- TODO: Consider choosing Option Type as the output type
 def domain (dom_aux : ClosedTyp → Type) (t: ClosedTyp): Type :=
   match t with
+  -- | .Typparam i => type_env i
   | ⟨._Bool, _⟩ => Bool
   | ⟨.Int i, _⟩ =>
     match i with
