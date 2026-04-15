@@ -115,8 +115,17 @@ def trans_exp {Γ: context} (e : sst.Exp) (t : sst.Typ) (hty : Γ ⊢ e : t )(ae
       ⟨.inl ⟨Int, constTerm (airFunc.Nat (toString f))⟩, aenv⟩
     | .StrSlice _ => sorry
 
-  -- TODO
-  | .Var idx => ⟨.inl ⟨Int, Term.var AirSorts.Int idx⟩, aenv⟩
+  | .Var idx =>
+    match t with
+    | .TypParam _ =>
+      -- Sort is Poly.  The has_type(v, TypParamConst p) constraint is an open
+      -- formula (references free variable idx) and cannot be a closed Sentence,
+      -- so it is not added to aenv here; it is captured semantically by
+      -- CoherentAssignment in the soundness theorem instead.
+      ⟨.inl ⟨Poly, Term.var Poly idx⟩, aenv⟩
+    | _ =>
+      -- For all concrete types the sort is determined by trans_typ.
+      ⟨.inl ⟨trans_typ t, Term.var (trans_typ t) idx⟩, aenv⟩
   | .Binary op e₁ e₂ =>
     -- Thread the axiom environment through both sub-expressions.
     match op with

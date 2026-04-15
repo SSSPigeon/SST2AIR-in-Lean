@@ -17,9 +17,6 @@ variable (tenv : typ_env) (dom_aux : ClosedTyp → Type)
 
 def Poly_domain: Type :=  Σ i : String, domain dom_aux (tenv i)
 
-def embed (i : String) : domain dom_aux (tenv i) → Poly_domain tenv dom_aux :=
-  fun x => ⟨ i, x ⟩
-
 -- TODO: define a toy example
 
 /-- Encoding from SST semantic values to AIR carrier values at the translated sort.
@@ -43,7 +40,7 @@ noncomputable def encode (t : Typ) {T F : Type}:
   | .Int .Char   => fun v => Int.ofNat (cast interp_char v).val.toNat
   | .Float 32    => fun v => Int.ofNat (cast interp_float32 v).toNat
   | .Float 64    => fun v => Int.ofNat (cast interp_float64 v).toNat
-  | .TypParam i  => fun v => embed tenv dom_aux i v
+  | .TypParam i  => fun v => ⟨ i, v ⟩
   | .Int (.U _)  | .Int (.I _) | .Int .USize | .Int .ISize
   | .Float _     | .StrSlice   | .Array _
   | .Tuple _ _   | .Decorated _ _ | .Struct _ _ | .Enum _ _
