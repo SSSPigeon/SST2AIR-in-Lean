@@ -15,6 +15,7 @@ abbrev AirMod.toFam (P T F : Type) [AirMod P T F] : AirSorts → Type := AirCarr
 
 variable (tenv : typ_env) (dom_aux : ClosedTyp → Type)
 
+-- def Poly_domain: Type :=  Σ i : String, type_env i
 def Poly_domain: Type :=  Σ i : String, domain dom_aux (tenv i)
 
 -- TODO: define a toy example
@@ -55,6 +56,18 @@ def CoherentAssignment {Γ : context}
   ∀ (i : Nat) (hi : i < Γ.length),
     v (trans_typ Γ[i]) i = encode tenv dom_aux Γ[i] (venv i hi)
 
+/-- Coherence for `typ_rep` valuations: an AIR assignment `v` agrees with a
+    `val_vars'` valuation `venv'` when, for every de Bruijn index `i` in `Γ`,
+    the AIR value at sort `trans_typ Γ[i]` equals `encode'` applied to the
+    `typ_rep` value `venv' i hi`. -/
+def CoherentAssignment' {type_env : String → Type}
+    {dom_aux' : (String → Type) → Typ → Type}
+    {Γ : context}
+    (venv' : @val_vars' type_env Γ dom_aux') {T F : Type}
+    (v : TransVarFam →ₛ AirCarrier (Poly_rep type_env) T F) : Prop :=
+  ∀ (i : Nat) (hi : i < Γ.length),
+    v (trans_typ Γ[i]) i = encode' type_env dom_aux' Γ[i] (venv' i hi)
+
 /-- Semantic equivalence of two AIR results (`.1` of `trans_exp`) under a
     variable assignment.  Handles both result shapes:
     - `.inr φ`: the expression translated to a proposition — check `φ₁ ↔ φ₂`.
@@ -72,7 +85,64 @@ def AirResultEquiv {Γ : context} {t : Typ}
       -- Both are terms (e.g. integer expressions): value equality
       have hty : s₁ = s₂ := by sorry
       Term.equal tm₁ (hty ▸ tm₂)
-  | _, _ => falsum
+  | .inl ⟨s, tm⟩, .inr φ | .inr φ, .inl ⟨s, tm⟩ =>
+    if h : s = .Bool
+    then
+      biff φ
+        (Term.equal (h ▸ tm) (Term.func [] .Bool (show air_ast.Functions [] .Bool from .True) (fun j => Fin.elim0 j)))
+    else falsum
+
+
+
+
+/-!
+## Sort-preservation of `trans_exp`
+
+The following theorems state that `trans_exp` is *sort-preserving*:
+the `.1` component of the result matches the expected shape at sort `trans_typ t`.
+-/
+section trans_exp_sort
+
+variable {Γ : context} (aenv : TransAxioms)
+
+/-- A boolean constant `b : Bool` translates to a *formula* (`.inr`):
+    `True` for `b = true`, `falsum` for `b = false`.
+    (Bool terms are lifted to formulas in the current encoding.) -/
+theorem trans_exp_bool_const (b : Bool)
+    (hty : Γ ⊢ .Const (.Bool b) : ._Bool) :
+    (trans_exp (.Const (.Bool b)) ._Bool hty aenv).1 =
+      .inr (if b then truth else falsum) := by
+  simp [trans_exp]
+  split_ifs <;> simp_all
+
+/-- An integer constant `i : Int` (at SST type `Int.Int`) translates to an
+    `Int`-sorted term (`.inl ⟨AirSorts.Int, tm⟩`). -/
+theorem trans_exp_int_const (i : Int)
+    (hty : Γ ⊢ .Const (.Int i) : .Int .Int) :
+    ∃ tm : air_ast.Term TransVarFam AirSorts.Int,
+    (trans_exp (.Const (.Int i)) (.Int .Int) hty aenv).1 = .inl ⟨AirSorts.Int, tm⟩ := by
+  simp [trans_exp]
+  split_ifs <;> exact ⟨_, rfl⟩
+
+/-- A natural-number constant `n : Nat` (represented as a non-negative `Int` at
+    SST type `Int.Nat`) also translates to an `Int`-sorted term. -/
+theorem trans_exp_nat_const (n : Nat)
+    (hty : Γ ⊢ .Const (.Int (Int.ofNat n)) : .Int .Nat) :
+    ∃ tm : air_ast.Term TransVarFam AirSorts.Int,
+    (trans_exp (.Const (.Int (Int.ofNat n))) (.Int .Nat) hty aenv).1 =
+      .inl ⟨AirSorts.Int, tm⟩ := by
+  simp [trans_exp]
+
+/-- A variable at de Bruijn index `idx` with SST type `t` translates to a term
+    at sort `trans_typ t` — the variable `idx` itself, coerced to that sort. -/
+theorem trans_exp_var (idx : Nat) (t : Typ)
+    (hty : Γ ⊢ .Var idx : t) :
+    (trans_exp (.Var idx) t hty aenv).1 =
+      .inl ⟨trans_typ t, Term.var (trans_typ t) idx⟩ := by
+  simp [trans_exp]
+  cases t <;> simp [trans_typ]
+
+end trans_exp_sort
 
 theorem trans_sound
   {Γ : context} {t : Typ} {dom_aux : ClosedTyp → Type}
@@ -85,8 +155,12 @@ theorem trans_sound
   (h_air : ∀ (T F : Type) [M : AirMod (Poly_domain tenv dom_aux) T F]
       (v : TransVarFam →ₛ AirMod.toFam (Poly_domain tenv dom_aux) T F),
       CoherentAssignment tenv dom_aux venv v →
+
       AirMod.toFam (Poly_domain tenv dom_aux) T F ⊨
         (trans_exp e₁ t hty₁ aenv).2 ∪ (trans_exp e₂ t hty₂ aenv).2 →
       (AirResultEquiv e₁ e₂ hty₁ hty₂).Realize v) :
+
   -- The SST denotations agree:
-  exp_rep dom_aux Γ tenv venv t e₁ hty₁ = exp_rep dom_aux Γ tenv venv t e₂ hty₂ := by sorry
+  exp_rep dom_aux Γ tenv venv t e₁ hty₁ =
+  exp_rep dom_aux Γ tenv venv t e₂ hty₂
+  := by sorry

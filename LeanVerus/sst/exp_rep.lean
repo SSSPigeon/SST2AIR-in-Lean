@@ -8,8 +8,11 @@ import LeanVerus.Sst.Autosubst
 open sst typing
 
 variable (tenv : typ_env)  (dom_aux : ClosedTyp → Type)
+{type_env : String → Type} {dom_aux' : (String → Type) → Typ → Type}
 
 def val_vars (Γ: context) dom_aux :=  (i : Nat) → (_ : i < Γ.length) → typ_interp tenv dom_aux Γ[i] --⊕ ExpError
+
+def val_vars' (Γ: context) dom_aux' :=  (i : Nat) → (_ : i < Γ.length) → typ_rep type_env dom_aux' Γ[i]
 
 def extend_venv {Γ: context} (venv: val_vars tenv Γ dom_aux) (t : Typ) (v : typ_interp tenv dom_aux t) : val_vars tenv (t :: Γ) dom_aux :=
   fun i h =>

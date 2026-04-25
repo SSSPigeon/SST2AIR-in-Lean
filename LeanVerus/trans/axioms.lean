@@ -188,6 +188,59 @@ def unbox_box_int : air_ast.Sentence :=
 
 end PloyCastingAxioms
 
+section HasTypeAxioms
+-- https://github.com/verus-lang/verus/blob/788fbe2526336161902df2f42b89687f8a015602/source/vir/src/prelude.rs#L603
+
+-- ∀ (b : Bool), has_type(ofB(b), BOOL) = True
+def has_type_bool : air_ast.Sentence :=
+  all (s := Bool) <|
+    let b : air_ast.Term CtxBool AirSorts.Bool :=
+      Term.var AirSorts.Bool (Sum.inr ⟨⟨0, by simp⟩, rfl⟩)
+    let ofB_b : air_ast.Term CtxBool Poly :=
+      Term.func [AirSorts.Bool] Poly airFunc.ofB
+        fun i => match i with
+          | ⟨0, _⟩     => b
+          | ⟨_ + 1, h⟩ => absurd h (by simp)
+    let BOOL_tm : air_ast.Term CtxBool TYPE :=
+      Term.func [] TYPE airFunc.BOOL
+        fun i => absurd i.isLt (by simp)
+    let constTrueB : air_ast.Term CtxBool AirSorts.Bool :=
+      Term.func [] AirSorts.Bool airFunc.True
+        fun i => absurd i.isLt (by simp)
+    equal
+      (Term.func [Poly, TYPE] AirSorts.Bool airFunc.HAS_TYPE
+        fun i => match i with
+          | ⟨0, _⟩     => ofB_b
+          | ⟨1, _⟩     => BOOL_tm
+          | ⟨_ + 2, h⟩ => absurd h (by simp))
+      constTrueB
+
+-- ∀ (i : Int), has_type(ofI(i), INT) = True
+def has_type_int : air_ast.Sentence :=
+  all (s := Int) <|
+    let i_var : air_ast.Term CtxInt AirSorts.Int :=
+      Term.var AirSorts.Int (Sum.inr ⟨⟨0, by simp⟩, rfl⟩)
+    let ofI_i : air_ast.Term CtxInt Poly :=
+      Term.func [AirSorts.Int] Poly airFunc.ofI
+        fun i => match i with
+          | ⟨0, _⟩     => i_var
+          | ⟨_ + 1, h⟩ => absurd h (by simp)
+    let INT_tm : air_ast.Term CtxInt TYPE :=
+      Term.func [] TYPE airFunc.INT
+        fun i => absurd i.isLt (by simp)
+    let constTrueI : air_ast.Term CtxInt AirSorts.Bool :=
+      Term.func [] AirSorts.Bool airFunc.True
+        fun i => absurd i.isLt (by simp)
+    equal
+      (Term.func [Poly, TYPE] AirSorts.Bool airFunc.HAS_TYPE
+        fun i => match i with
+          | ⟨0, _⟩     => ofI_i
+          | ⟨1, _⟩     => INT_tm
+          | ⟨_ + 2, h⟩ => absurd h (by simp))
+      constTrueI
+
+end HasTypeAxioms
+
 -- sst
 -- t₁: ∀ x y:int, x + y = y + x
 -- t₂: ∀ x:int, x = x
@@ -202,7 +255,8 @@ end PloyCastingAxioms
 def preludeAxioms : air_ast.Theory :=
   {ADD_axiom, SUB_axiom, MUL_axiom, DIV_axiom, MOD_axiom,
    Mul_unsigned_bounds, EucDiv_unsigned_bounds, EucMod_unsigned_bounds,
-   unbox_box_bool, unbox_box_int}
+   unbox_box_bool, unbox_box_int,
+   has_type_bool, has_type_int}
 
 end PreludeAxioms
 
