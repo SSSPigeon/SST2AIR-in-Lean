@@ -164,3 +164,24 @@ theorem trans_sound
   exp_rep dom_aux Γ tenv venv t e₁ hty₁ =
   exp_rep dom_aux Γ tenv venv t e₂ hty₂
   := by sorry
+
+/-- `typ_rep`-based soundness: same statement as `trans_sound` but for open type
+    environments.  Uses `CoherentAssignment'` (w.r.t. `encode'` / `Poly_rep`) and
+    concludes that the `exp_rep'` denotations agree. -/
+theorem trans_sound'
+  {type_env : String → Type} {dom_aux' : (String → Type) → Typ → Type}
+  {Γ : context} {t : Typ}
+  (e₁ e₂ : sst.Exp)
+  (hty₁ : Γ ⊢ e₁ : t) (hty₂ : Γ ⊢ e₂ : t)
+  (aenv : TransAxioms)
+  (venv' : @val_vars' type_env Γ dom_aux')
+  (h_air : ∀ (T F : Type) [M : AirMod (Poly_rep type_env) T F]
+      (v : TransVarFam →ₛ AirMod.toFam (Poly_rep type_env) T F),
+      CoherentAssignment' venv' v →
+      AirMod.toFam (Poly_rep type_env) T F ⊨
+        (trans_exp e₁ t hty₁ aenv).2 ∪ (trans_exp e₂ t hty₂ aenv).2 →
+      (AirResultEquiv e₁ e₂ hty₁ hty₂).Realize v) :
+  -- The typ_rep denotations agree:
+  @exp_rep' type_env dom_aux' Γ venv' t e₁ hty₁ =
+  @exp_rep' type_env dom_aux' Γ venv' t e₂ hty₂
+  := by sorry

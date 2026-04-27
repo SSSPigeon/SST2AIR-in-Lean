@@ -112,10 +112,15 @@ inductive airFunc : List AirSorts → AirSorts → Type
   | toI : airFunc [Poly] Int   -- %I
   | toB : airFunc [Poly] Bool  -- %B
 
+inductive airReln : List AirSorts → Type
+  | Le : airReln [Int, Int]
+  | Ge : airReln [Int, Int]
+  | Lt : airReln [Int, Int]
+  | Gt : airReln [Int, Int]
 
 def air_ast : MSLanguage AirSorts := {
   Functions := airFunc
-  Relations := fun _ => Empty
+  Relations := airReln
 }
 
 
@@ -208,6 +213,16 @@ class AirMod (P T F : Type) extends air_ast.MSStructure (AirCarrier P T F) where
   funMap_and   : ∀ (n : Nat) xs, funMap (airFunc.And n) xs = foldBools (· && ·) true xs
   funMap_or    : ∀ (n : Nat) xs, funMap (airFunc.Or n) xs = foldBools (· || ·) false xs
   funMap_xor   : ∀ (n : Nat) xs, funMap (airFunc.Xor n) xs = foldBools (· ^^ ·) false xs
+
+  -- Relations: airReln must behave as the corresponding integer order
+  relMap_le : ∀ (xs : SortedTuple [AirSorts.Int, AirSorts.Int] (AirCarrier P T F)),
+      RelMap airReln.Le xs ↔ xs.eval₂₁ ≤ xs.eval₂₂
+  relMap_ge : ∀ (xs : SortedTuple [AirSorts.Int, AirSorts.Int] (AirCarrier P T F)),
+      RelMap airReln.Ge xs ↔ xs.eval₂₁ ≥ xs.eval₂₂
+  relMap_lt : ∀ (xs : SortedTuple [AirSorts.Int, AirSorts.Int] (AirCarrier P T F)),
+      RelMap airReln.Lt xs ↔ xs.eval₂₁ < xs.eval₂₂
+  relMap_gt : ∀ (xs : SortedTuple [AirSorts.Int, AirSorts.Int] (AirCarrier P T F)),
+      RelMap airReln.Gt xs ↔ xs.eval₂₁ > xs.eval₂₂
 
   -- Leave Poly/TYPE/Fun operations abstract — axioms constrain them
 

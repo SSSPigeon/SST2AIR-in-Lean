@@ -34,6 +34,12 @@ axiom array_out_of_bound_unspecified_value : {t : Type} → List t → Nat → t
 
 end exception
 
+/-- `typ_rep`-valued denotation of an expression, parallel to `exp_rep` but using
+    `val_vars'` (the open type environment). -/
+noncomputable def exp_rep' Γ
+    (venv' : @val_vars' type_env Γ dom_aux')
+    (t : Typ) (e : Exp) (hty : Γ ⊢ e : t) : typ_rep type_env dom_aux' t := sorry
+
 noncomputable
 def exp_rep Γ tenv (venv: val_vars tenv Γ dom_aux) (t : Typ) (e : Exp) (hty : Γ ⊢ e : t): typ_interp tenv dom_aux t:=
   match e with
